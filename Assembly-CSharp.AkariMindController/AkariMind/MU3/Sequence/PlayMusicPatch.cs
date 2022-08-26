@@ -1,5 +1,6 @@
 ﻿using AkariMindControllers.AkariMind.MU3.Notes;
 using AkiraMindController.Communication.AkariCommand;
+using AkiraMindController.Communication.Connectors;
 using MonoMod;
 using MU3.Battle;
 using MU3.Game;
@@ -21,7 +22,9 @@ namespace AkariMindControllers.AkariMind.MU3.Sequence
     {
         private GameEngine _gameEngine;
         private SessionInfo _sessionInfo;
+
         private NotesManager ntMgr => (!(_gameEngine != null)) ? null : _gameEngine.notesManager;
+        private NotesManagerEx ntMgrEx => ntMgr as NotesManagerEx;
 
         private bool isPause = false;
         private float pauseMsec;
@@ -37,9 +40,22 @@ namespace AkariMindControllers.AkariMind.MU3.Sequence
             Controller.RegisterMessageHandler<ResumeGamePlay>(OnRequestResumeGamePlay);
             Controller.RegisterMessageHandler<PauseGamePlay>(OnRequestPauseGamePlay);
             Controller.RegisterMessageHandler<PrintGamePlayStatus>(OnRequestPrintGamePlayStatus);
+            Controller.RegisterMessageHandler<GetNoteManagerValue>(OnRequestGetNoteManagerValue);
             Controller.RegisterMessageHandler<SeekToGamePlay>(OnRequestSeekToGamePlay);
 
             isPause = false;
+        }
+
+        private void OnRequestGetNoteManagerValue(GetNoteManagerValue message, IResponser responser)
+        {
+            responser.Response(new GetNoteManagerValue.ReturnValue()
+            {
+                currentMusicId = _sessionInfo.musicData.id,
+                playEndFrame = ntMgr.getEndPlayFrame(),
+                noteEndFrame = ntMgr.getEndNoteFrame(),
+                playStartFrame = ntMgrEx.getStartPlayFrame(),
+                noteStartFrame = ntMgrEx.getStartNoteFrame(),
+            });
         }
 
         private void OnRequestPrintGamePlayStatus(PrintGamePlayStatus message)
@@ -99,8 +115,7 @@ namespace AkariMindControllers.AkariMind.MU3.Sequence
             ntMgr.setFrameForce(msec / 16.666666f);
 
             //redraw notes and make them visible
-            var ntMgrEx = ntMgr as NoteManagerEx;
-            ntMgrEx.ReapplyNotesVisible();
+            ntMgrEx.refreshNotesVisible();
 
             pauseMsec = msec;
 
@@ -131,6 +146,7 @@ namespace AkariMindControllers.AkariMind.MU3.Sequence
             Controller.UnregisterSpecifyMessageAllHandler<PauseGamePlay>();
             Controller.UnregisterSpecifyMessageAllHandler<SeekToGamePlay>();
             Controller.UnregisterSpecifyMessageAllHandler<PrintGamePlayStatus>();
+            Controller.UnregisterSpecifyMessageAllHandler<GetNoteManagerValue>();
         }
 
         private IEnumerator OnRequestRestartGamePlay(RestartGamePlay message)

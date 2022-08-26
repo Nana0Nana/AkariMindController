@@ -10,8 +10,9 @@ namespace AkiraMindController.Communication
     {
         public static object DeserializeFromPayloadString(string payloadStr)
         {
-            Log.WriteLine($"[utils] payloadStr : {payloadStr}");
-            var payload = Json.Deserialize<Payload>(payloadStr);
+            var jsonStr = Encoding.UTF8.GetString(Convert.FromBase64String(payloadStr));
+            Log.WriteLine($"[utils] jsonStr : {jsonStr}");
+            var payload = Json.Deserialize<Payload>(jsonStr);
             Log.WriteLine($"[utils] payload.typeName : {payload.typeName}");
             var type = Type.GetType(payload.typeName);
             Log.WriteLine($"[utils] payloadStr : {type}");
