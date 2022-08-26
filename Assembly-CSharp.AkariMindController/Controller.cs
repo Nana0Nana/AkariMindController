@@ -1,16 +1,15 @@
 ﻿using AkiraMindController.Communication;
-using AkiraMindController.Communication.AkariCommand;
 using AkiraMindController.Communication.Connectors;
+using AkiraMindController.Communication.Connectors.CommonMessages;
 using AkiraMindController.Communication.Connectors.ConnectorImpls.Http;
+using AkiraMindController.Communication.Connectors.InternalMessages;
 using MU3;
-using MU3.Battle;
 using MU3.Util;
 using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using UnityEngine;
+using static AkiraMindController.Communication.Connectors.CommonMessages.Ping;
+using Ping = AkiraMindController.Communication.Connectors.CommonMessages.Ping;
 
 namespace AkariMindControllers
 {
@@ -36,6 +35,7 @@ namespace AkariMindControllers
                 server = new HttpConnectorServer(30000);
 
                 RegisterMessageHandler<Message>(ProcessMessage);
+                RegisterMessageHandler<Ping>(ProcessPing);
 
                 server.Start();
                 PatchLog.WriteLine($"Controller.Init() Done!");
@@ -44,6 +44,11 @@ namespace AkariMindControllers
             {
                 PatchLog.WriteLine($"Controller.Init() Failed : {e.Message}");
             }
+        }
+
+        private static void ProcessPing(Ping message, IResponser responser)
+        {
+            responser.Response(new Pong());
         }
 
         private static void ExecuteOnUnityThread<T>(OnCoroutineResponsableReceviceMessageFunc<T> handler, T param, IResponser responser)

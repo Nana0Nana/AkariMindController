@@ -50,11 +50,16 @@ namespace AkariMindControllers.AkariMind.MU3.Sequence
         {
             responser.Response(new GetNoteManagerValue.ReturnValue()
             {
-                currentMusicId = _sessionInfo.musicData.id,
                 playEndFrame = ntMgr.getEndPlayFrame(),
                 noteEndFrame = ntMgr.getEndNoteFrame(),
                 playStartFrame = ntMgrEx.getStartPlayFrame(),
                 noteStartFrame = ntMgrEx.getStartNoteFrame(),
+                visibleFrame = ntMgrEx.getFrameVisible(),
+                invisibleFrame = ntMgrEx.getFrameInvisible(),
+                currentFrame = ntMgrEx.getCurrentFrame(),
+                playProgress = ntMgrEx.getPlayProgress(),
+                isPlaying = ntMgrEx.isPlaying,
+                isPlayEnd = ntMgrEx.isPlayEnd,
             });
         }
 
