@@ -7,7 +7,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Title="AkariMindControllerTestGUI"
     Width="350"
-    Height="200"
+    Height="600"
     DataContext="{Binding RelativeSource={RelativeSource Self}}"
     ResizeMode="NoResize"
     mc:Ignorable="d">
@@ -19,47 +19,70 @@
             </Setter>
         </Style>
     </Window.Resources>
-    <StackPanel>
-        <StackPanel Orientation="Horizontal">
-            <TextBox
-                Width="100"
-                Margin="10,5,10,5"
-                VerticalAlignment="Center"
-                Background="Gray"
-                Foreground="White"
-                Text="{Binding Port}">
-            </TextBox>
-            <Button Click="Button_Click_1">Connect</Button>
-        </StackPanel>
-        <StackPanel Orientation="Horizontal">
-            <Button Click="Button_Click">Pause</Button>
-            <Button Click="Button_Click_2">Resume</Button>
-            <Button Click="Button_Click_3">Restart</Button>
-            <Button Click="Button_Click_4">Status</Button>
-        </StackPanel>
-        <StackPanel Orientation="Horizontal">
-            <TextBox
-                Width="100"
-                Margin="10,5,10,5"
-                Padding="2"
-                VerticalAlignment="Center"
-                Background="Gray"
-                Foreground="White"
-                Text="{Binding SeekTime}">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <TextBox
+                    Width="100"
+                    Margin="10,5,10,5"
+                    VerticalAlignment="Center"
+                    Background="Gray"
+                    Foreground="White"
+                    Text="{Binding Port}">
+                </TextBox>
+                <Button Click="Button_Click_1">Connect</Button>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <Button Click="Button_Click" IsEnabled="{Binding IsConnected}">Pause</Button>
+                <Button Click="Button_Click_2" IsEnabled="{Binding IsConnected}">Resume</Button>
+                <Button Click="Button_Click_3" IsEnabled="{Binding IsConnected}">Restart</Button>
+                <Button Click="Button_Click_4" IsEnabled="{Binding IsConnected}">GetData</Button>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <TextBox
+                    Width="100"
+                    Margin="10,5,10,5"
+                    Padding="2"
+                    VerticalAlignment="Center"
+                    Background="Gray"
+                    Foreground="White"
+                    Text="{Binding SeekTime}">
 
-            </TextBox>
-            <CheckBox
-                Margin="10,5,10,5"
-                Padding="2"
-                VerticalAlignment="Center"
-                VerticalContentAlignment="Center"
-                IsChecked="{Binding IsPlayAfterSeek}">
-                PlayAfterSeek
-            </CheckBox>
-            <Button VerticalAlignment="Center" Click="Button_Click_5">Seek</Button>
+                </TextBox>
+                <CheckBox
+                    Margin="10,5,10,5"
+                    Padding="2"
+                    VerticalAlignment="Center"
+                    VerticalContentAlignment="Center"
+                    IsChecked="{Binding IsPlayAfterSeek}">
+                    PlayAfterSeek
+                </CheckBox>
+                <Button
+                    VerticalAlignment="Center"
+                    Click="Button_Click_5"
+                    IsEnabled="{Binding IsConnected}">
+                    Seek
+                </Button>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <Button Click="Button_Click_6">Clear</Button>
+            </StackPanel>
         </StackPanel>
-        <StackPanel Orientation="Horizontal">
-            <Button>Clear</Button>
-        </StackPanel>
-    </StackPanel>
+
+        <ScrollViewer
+            Grid.Row="1"
+            Margin="10"
+            VerticalScrollBarVisibility="Auto">
+            <TextBlock
+                VerticalAlignment="Stretch"
+                Background="Gray"
+                Foreground="White"
+                Text="{Binding Output}">
+            </TextBlock>
+        </ScrollViewer>
+    </Grid>
 </Window>
