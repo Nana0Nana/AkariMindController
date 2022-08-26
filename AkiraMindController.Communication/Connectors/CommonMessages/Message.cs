@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace AkiraMindController.Communication.AkariCommand
+namespace AkiraMindController.Communication.Connectors.InternalMessages
 {
     [Serializable]
     public class Message

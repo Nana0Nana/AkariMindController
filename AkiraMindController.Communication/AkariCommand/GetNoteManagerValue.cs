@@ -11,11 +11,16 @@ namespace AkiraMindController.Communication.AkariCommand
         [Serializable]
         public class ReturnValue
         {
-            public float currentMusicId;
             public float playEndFrame;
             public float noteEndFrame;
             public float playStartFrame;
             public float noteStartFrame;
+            public float visibleFrame;
+            public float invisibleFrame;
+            public float currentFrame;
+            public float playProgress;
+            public bool isPlaying;
+            public bool isPlayEnd;
         }
     }
 }

@@ -41,18 +41,18 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AkariCommand\GetNoteManagerValue.cs" />
-    <Compile Include="AkariCommand\Message.cs" />
+    <Compile Include="Connectors\CommonMessages\Message.cs" />
     <Compile Include="AkariCommand\PauseGamePlay.cs" />
     <Compile Include="AkariCommand\RestartGamePlay.cs" />
     <Compile Include="AkariCommand\PrintGamePlayStatus.cs" />
     <Compile Include="AkariCommand\ResumeGamePlay.cs" />
     <Compile Include="AkariCommand\SeekToGamePlay.cs" />
     <Compile Include="Connectors\CommonConnectorBase.cs" />
+    <Compile Include="Connectors\CommonMessages\Ping.cs" />
     <Compile Include="Connectors\ConnectorImpls\Http\HttpConnectorClient.cs" />
     <Compile Include="Connectors\ConnectorImpls\Http\HttpConnectorResponser.cs" />
     <Compile Include="Connectors\ConnectorImpls\Http\HttpConnectorServer.cs" />
     <Compile Include="Connectors\IConnector.cs" />
-    <Compile Include="Connectors\InternalMessages\DisconnectedMessage.cs" />
     <Compile Include="Connectors\IResponser.cs" />
     <Compile Include="Connectors\ISendable.cs" />
     <Compile Include="Connectors\ConnectorImpls\MessageQueue\MessageQueueConnector.cs" />
