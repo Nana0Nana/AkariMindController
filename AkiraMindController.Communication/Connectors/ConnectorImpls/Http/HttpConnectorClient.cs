@@ -47,17 +47,23 @@ namespace AkiraMindController.Communication.Connectors.ConnectorImpls.Http
             }
         }
 
-        public X SendMessageWithResponse<T, X>()
+        public X SendMessageWithResponse<T, X>(T obj)
             where T : new()
             where X : new()
         {
-            var result = default(X);
-            SendMessage(new T(), stream =>
+            X result = default;
+            SendMessage(obj, stream =>
             {
-                using var reader= new StreamReader(stream);
-                result = (X)Utils.DeserializeFromPayloadString(reader.ReadToEnd());
+                using var reader = new StreamReader(stream);
+                var str = reader.ReadToEnd();
+                var obj = Utils.DeserializeFromPayloadString(str);
+                result = obj?.GetType() == typeof(X) ? (X)obj : default;
             });
             return result;
         }
+
+        public X SendMessageWithResponse<T, X>()
+            where T : new()
+            where X : new() => SendMessageWithResponse<T, X>(new T());
     }
 }

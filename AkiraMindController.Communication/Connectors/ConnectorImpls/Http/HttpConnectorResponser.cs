@@ -9,6 +9,7 @@ namespace AkiraMindController.Communication.Connectors.ConnectorImpls.Http
     public class HttpConnectorResponser : IResponser
     {
         private Stream outputStream;
+        public bool HasResponsed { get; private set; } = false;
 
         public HttpConnectorResponser(Stream outputStream)
         {
@@ -17,6 +18,9 @@ namespace AkiraMindController.Communication.Connectors.ConnectorImpls.Http
 
         public void Response<T>(T obj)
         {
+            if (HasResponsed)
+                return;
+            HasResponsed = true;
             using var writer = new StreamWriter(outputStream);
             writer.WriteLine(Utils.SerializeToPayloadString(obj));
         }

@@ -21,8 +21,7 @@ namespace AkiraMindController.Communication.Connectors.ConnectorImpls.Http
         private void ProcessRequest(HttpListenerContext r)
         {
             Log.WriteLine($"[server] path : {r.Request.Url.LocalPath}");
-            var payloadStr = Encoding.UTF8.GetString(Convert.FromBase64String(r.Request.QueryString["payload"]));
-            var param = Utils.DeserializeFromPayloadString(payloadStr);
+            var param = Utils.DeserializeFromPayloadString(r.Request.QueryString["payload"]);
             var responser = new HttpConnectorResponser(r.Response.OutputStream);
 
             foreach (var handler in GetTypeHandlers(param.GetType()))
