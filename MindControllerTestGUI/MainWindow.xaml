@@ -1,0 +1,65 @@
+﻿<Window
+    x:Class="MindControllerTestGUI.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:MindControllerTestGUI"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Title="AkariMindControllerTestGUI"
+    Width="350"
+    Height="200"
+    DataContext="{Binding RelativeSource={RelativeSource Self}}"
+    ResizeMode="NoResize"
+    mc:Ignorable="d">
+    <Window.Resources>
+        <Style TargetType="Button">
+            <Setter Property="Padding" Value="10,5,10,5">
+            </Setter>
+            <Setter Property="Margin" Value="10,5,10,5">
+            </Setter>
+        </Style>
+    </Window.Resources>
+    <StackPanel>
+        <StackPanel Orientation="Horizontal">
+            <TextBox
+                Width="100"
+                Margin="10,5,10,5"
+                VerticalAlignment="Center"
+                Background="Gray"
+                Foreground="White"
+                Text="{Binding Port}">
+            </TextBox>
+            <Button Click="Button_Click_1">Connect</Button>
+        </StackPanel>
+        <StackPanel Orientation="Horizontal">
+            <Button Click="Button_Click">Pause</Button>
+            <Button Click="Button_Click_2">Resume</Button>
+            <Button Click="Button_Click_3">Restart</Button>
+            <Button Click="Button_Click_4">Status</Button>
+        </StackPanel>
+        <StackPanel Orientation="Horizontal">
+            <TextBox
+                Width="100"
+                Margin="10,5,10,5"
+                Padding="2"
+                VerticalAlignment="Center"
+                Background="Gray"
+                Foreground="White"
+                Text="{Binding SeekTime}">
+
+            </TextBox>
+            <CheckBox
+                Margin="10,5,10,5"
+                Padding="2"
+                VerticalAlignment="Center"
+                VerticalContentAlignment="Center"
+                IsChecked="{Binding IsPlayAfterSeek}">
+                PlayAfterSeek
+            </CheckBox>
+            <Button VerticalAlignment="Center" Click="Button_Click_5">Seek</Button>
+        </StackPanel>
+        <StackPanel Orientation="Horizontal">
+            <Button>Clear</Button>
+        </StackPanel>
+    </StackPanel>
+</Window>

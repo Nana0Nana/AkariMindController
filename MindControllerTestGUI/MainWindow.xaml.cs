@@ -1,0 +1,104 @@
+﻿using AkiraMindController.Communication;
+using AkiraMindController.Communication.AkariCommand;
+using AkiraMindController.Communication.Connectors.ConnectorImpls.Http;
+using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Navigation;
+using System.Windows.Shapes;
+
+namespace MindControllerTestGUI
+{
+    /// <summary>
+    /// Interaction logic for MainWindow.xaml
+    /// </summary>
+    public partial class MainWindow : Window
+    {
+        public int Port
+        {
+            get { return (int)GetValue(PortProperty); }
+            set { SetValue(PortProperty, value); }
+        }
+
+        // Using a DependencyProperty as the backing store for Port.  This enables animation, styling, binding, etc...
+        public static readonly DependencyProperty PortProperty =
+            DependencyProperty.Register("Port", typeof(int), typeof(MainWindow), new PropertyMetadata(30000));
+
+        public int SeekTime
+        {
+            get { return (int)GetValue(SeekTimeProperty); }
+            set { SetValue(SeekTimeProperty, value); }
+        }
+
+        // Using a DependencyProperty as the backing store for SeekTime.  This enables animation, styling, binding, etc...
+        public static readonly DependencyProperty SeekTimeProperty =
+            DependencyProperty.Register("SeekTime", typeof(int), typeof(MainWindow), new PropertyMetadata(0));
+
+        public bool IsPlayAfterSeek
+        {
+            get { return (bool)GetValue(IsPlayAfterSeekProperty); }
+            set { SetValue(IsPlayAfterSeekProperty, value); }
+        }
+
+        // Using a DependencyProperty as the backing store for IsPlayAfterSeek.  This enables animation, styling, binding, etc...
+        public static readonly DependencyProperty IsPlayAfterSeekProperty =
+            DependencyProperty.Register("IsPlayAfterSeek", typeof(bool), typeof(MainWindow), new PropertyMetadata(false));
+
+        private HttpConnectorClient client;
+
+        public MainWindow()
+        {
+            InitializeComponent();
+            SimpleInterfaceImplement.Deserialize = (json, type) => JsonConvert.DeserializeObject(json, type);
+            SimpleInterfaceImplement.Serialize = (obj) => JsonConvert.SerializeObject(obj);
+            SimpleInterfaceImplement.Log = x => Debug.WriteLine(x);
+        }
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+            //pause
+            client.SendMessage<PauseGamePlay>();
+        }
+
+        private void Button_Click_1(object sender, RoutedEventArgs e)
+        {
+            //connect 
+            client = new HttpConnectorClient(Port);
+        }
+
+        private void Button_Click_2(object sender, RoutedEventArgs e)
+        {
+            //resume
+            client.SendMessage<ResumeGamePlay>();
+        }
+
+        private void Button_Click_3(object sender, RoutedEventArgs e)
+        {
+            //restart
+            client.SendMessage<RestartGamePlay>();
+        }
+
+        private void Button_Click_4(object sender, RoutedEventArgs e)
+        {
+            //status
+            client.SendMessage<PrintGamePlayStatus>();
+        }
+
+        private void Button_Click_5(object sender, RoutedEventArgs e)
+        {
+            //seek
+            client.SendMessage(new SeekToGamePlay() { audioTimeMsec = SeekTime, playAfterSeek = IsPlayAfterSeek });
+        }
+    }
+}
