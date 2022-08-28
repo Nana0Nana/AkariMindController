@@ -3,6 +3,7 @@ using AkiraMindController.Communication.AkariCommand;
 using AkiraMindController.Communication.Connectors;
 using MonoMod;
 using MU3.Battle;
+using MU3.Data;
 using MU3.Game;
 using MU3.Notes;
 using MU3.Reader;
@@ -60,6 +61,7 @@ namespace AkariMindControllers.AkariMind.MU3.Sequence
                 playProgress = ntMgrEx.getPlayProgress(),
                 isPlaying = ntMgrEx.isPlaying,
                 isPlayEnd = ntMgrEx.isPlayEnd,
+                ogkrFilePath = SingletonStateMachine<DataManager, DataManager.EState>.instance.getOgkrPath(_sessionInfo.musicData.id, _sessionInfo.musicLevel)
             });
         }
 

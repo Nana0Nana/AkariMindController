@@ -74,15 +74,18 @@
         </StackPanel>
 
         <ScrollViewer
+            x:Name="scrollViewer"
             Grid.Row="1"
             Margin="10"
             VerticalScrollBarVisibility="Auto">
-            <TextBlock
+            <TextBox
                 VerticalAlignment="Stretch"
                 Background="Gray"
                 Foreground="White"
-                Text="{Binding Output}">
-            </TextBlock>
+                IsReadOnly="True"
+                Text="{Binding Output}"
+                TextWrapping="Wrap">
+            </TextBox>
         </ScrollViewer>
     </Grid>
 </Window>

@@ -1,6 +1,5 @@
 ﻿using AkiraMindController.Communication;
 using AkiraMindController.Communication.Connectors;
-using AkiraMindController.Communication.Connectors.CommonMessages;
 using AkiraMindController.Communication.Connectors.ConnectorImpls.Http;
 using AkiraMindController.Communication.Connectors.InternalMessages;
 using MU3;

@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0-windows</TargetFramework>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <UseWPF>true</UseWPF>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <Target Condition="'$(Configuration)'=='DEBUG'" Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="xcopy &quot;$(ProjectDir)$(OutDir)*&quot; &quot;$(SolutionDir)refHost\OngekiFumenEditor\OngekiFumenEditor\bin\$(ConfigurationName)\net5.0-windows\Plugins\$(ProjectName)\&quot; /e /s /y" />
+  </Target>
+  <ItemGroup>
+    <PackageReference Include="Caliburn.Micro" Version="4.0.173" >
+      <ExcludeAssets>runtime;</ExcludeAssets>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\ongeki bright memory patch\AkariMindController\AkiraMindController.Communication\AkiraMindController.Communication.csproj" />
+    <ProjectReference Include="..\OngekiFumenSupport\refHost\OngekiFumenEditor\Dependences\gemini\src\Gemini\Gemini.csproj">
+      <Private>false</Private>
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </ProjectReference>
+    <ProjectReference Include="..\OngekiFumenSupport\refHost\OngekiFumenEditor\OngekiFumenEditor\OngekiFumenEditor.csproj">
+      <Private>false</Private>
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="Modules\OngekiGamePlayControllerViewer\Views\OngekiGamePlayControllerViewerView.xaml">
+      <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
+    </Page>
+  </ItemGroup>
+</Project>

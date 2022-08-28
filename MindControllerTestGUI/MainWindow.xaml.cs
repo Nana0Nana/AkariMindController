@@ -35,6 +35,8 @@ namespace MindControllerTestGUI
             get => isConnected;
             set
             {
+                if (isConnected != value && !value)
+                    AppendOutputLine("Disconnected.");
                 isConnected = value;
                 PropertyChanged?.Invoke(this, new(nameof(IsConnected)));
             }
@@ -94,7 +96,7 @@ namespace MindControllerTestGUI
             SimpleInterfaceImplement.Log = x => Debug.WriteLine(x);
 
             timer = new DispatcherTimer();
-            timer.Interval = TimeSpan.FromSeconds(1);
+            timer.Interval = TimeSpan.FromSeconds(10);
             timer.Tick += (a, b) =>
             {
                 IsConnected = client?.SendMessageWithResponse<Ping, Pong>() is Pong;
@@ -140,10 +142,17 @@ namespace MindControllerTestGUI
             client.SendMessage(new SeekToGamePlay() { audioTimeMsec = SeekTime, playAfterSeek = IsPlayAfterSeek });
         }
 
-        private void AppendOutputLine(string content)
+        private async void AppendOutputLine(string content)
         {
+            var isScrollToEnd = scrollViewer.VerticalOffset == scrollViewer.ContentVerticalOffset;
             Output += content;
             Output += Environment.NewLine;
+
+            if (isScrollToEnd)
+            {
+                await Dispatcher.Yield();
+                scrollViewer.ScrollToEnd();
+            }
         }
 
         private void Button_Click_6(object sender, RoutedEventArgs e)

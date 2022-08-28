@@ -21,6 +21,7 @@ namespace AkiraMindController.Communication.AkariCommand
             public float playProgress;
             public bool isPlaying;
             public bool isPlayEnd;
+            public string ogkrFilePath;
         }
     }
 }
