@@ -100,6 +100,14 @@
                         <Button cal:Message.Attach="GetOgkrSavePathFromGamePlay()" IsEnabled="{Binding IsConnected}">获取谱面路径</Button>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal">
+                        <CheckBox
+                            Margin="10,5,10,5"
+                            Padding="2"
+                            VerticalAlignment="Center"
+                            VerticalContentAlignment="Center"
+                            IsChecked="{Binding IsPlayGuideSEAfterPlay}">
+                            恢复播放是否先播放节奏音效
+                        </CheckBox>
                         <Button cal:Message.Attach="Play()" IsEnabled="{Binding IsConnected}">播放</Button>
                         <Button cal:Message.Attach="Pause()" IsEnabled="{Binding IsConnected}">暂停</Button>
                         <Button cal:Message.Attach="Restart()" IsEnabled="{Binding IsConnected}">重开</Button>
@@ -128,6 +136,16 @@
                             IsEnabled="{Binding IsConnected}">
                             执行跳转
                         </Button>
+                    </StackPanel>
+                </StackPanel>
+            </GroupBox>
+            <GroupBox Margin="5">
+                <GroupBox.Header>
+                    <Label Content="其他" />
+                </GroupBox.Header>
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Button cal:Message.Attach="PlayGuideSE()" IsEnabled="{Binding IsConnected}">播放节奏音效</Button>
                     </StackPanel>
                 </StackPanel>
             </GroupBox>

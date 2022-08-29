@@ -60,6 +60,13 @@ namespace OngekiFumenEditorPlugins.AkariMindController.Modules.OngekiGamePlayCon
             set => Set(ref currentEditor, value);
         }
 
+        private bool isPlayGuideSEAfterPlay;
+        public bool IsPlayGuideSEAfterPlay
+        {
+            get => isPlayGuideSEAfterPlay;
+            set => Set(ref isPlayGuideSEAfterPlay, value);
+        }
+
         private int seekTimeMsec;
         public int SeekTimeMsec
         {
@@ -133,8 +140,8 @@ namespace OngekiFumenEditorPlugins.AkariMindController.Modules.OngekiGamePlayCon
             OgkrSavePath = FileDialogHelper.SaveFile("请指定.ogkr保存的路径用于音击程序读取.", new[] { (".ogkr", "标准音击谱面文件") }) ?? OgkrSavePath;
         }
 
-        public async void GetOgkrSavePathFromGamePlay()
-        {
+        public async void GetOgkrSavePathFromGamePlay()        {
+
             if (ConnectStatus != ConnectStatus.Connected)
                 return;
 
@@ -149,7 +156,7 @@ namespace OngekiFumenEditorPlugins.AkariMindController.Modules.OngekiGamePlayCon
         {
             if (ConnectStatus != ConnectStatus.Connected)
                 return;
-            await Task.Run(() => client.SendMessage(new ResumeGamePlay()));
+            await Task.Run(() => client.SendMessage(new ResumeGamePlay() { playGuideSEBeforePlay = IsPlayGuideSEAfterPlay }));
         }
 
         public async Task Pause()
@@ -191,7 +198,6 @@ namespace OngekiFumenEditorPlugins.AkariMindController.Modules.OngekiGamePlayCon
                 return;
             var currentPlaytime = data.CurrentTime;
             await GenerateOgkr(OgkrSavePath);
-            await Task.Delay(100);
             await SeekTo(currentPlaytime);
         }
 
@@ -229,6 +235,14 @@ namespace OngekiFumenEditorPlugins.AkariMindController.Modules.OngekiGamePlayCon
                 return Task.FromResult(false);
             //todo
             return Task.FromResult(true);
+        }
+
+        public void PlayGuideSE()
+        {
+            if (ConnectStatus != ConnectStatus.Connected)
+                return;
+
+            Task.Run(() => client.SendMessage<PlayGuideSE>());
         }
 
         public async Task<NotesManagerData?> GetNotesManagerData()
