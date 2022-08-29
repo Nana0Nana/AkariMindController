@@ -8,5 +8,6 @@ namespace AkiraMindController.Communication.AkariCommand
     [Serializable]
     public class ResumeGamePlay
     {
+        public bool playGuideSEBeforePlay = false;
     }
 }

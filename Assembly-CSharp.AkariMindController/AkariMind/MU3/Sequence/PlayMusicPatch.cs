@@ -15,6 +15,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEngine;
+using static MU3.Notes.NotesManager;
 
 namespace AkariMindControllers.AkariMind.MU3.Sequence
 {
@@ -42,10 +43,16 @@ namespace AkariMindControllers.AkariMind.MU3.Sequence
             Controller.RegisterMessageHandler<PauseGamePlay>(OnRequestPauseGamePlay);
             Controller.RegisterMessageHandler<PrintGamePlayStatus>(OnRequestPrintGamePlayStatus);
             Controller.RegisterMessageHandler<ReloadFumen>(OnReloadFumen);
+            Controller.RegisterMessageHandler<PlayGuideSE>(OnPlayGuideSE);
             Controller.RegisterMessageHandler<GetNoteManagerValue>(OnRequestGetNoteManagerValue);
             Controller.RegisterMessageHandler<SeekToGamePlay>(OnRequestSeekToGamePlay);
 
             isPause = false;
+        }
+
+        private void OnPlayGuideSE(PlayGuideSE message, IResponser responser)
+        {
+            ntMgrEx.playGuideSE();
         }
 
         private void OnReloadFumen(ReloadFumen message, IResponser responser)
@@ -146,9 +153,48 @@ namespace AkariMindControllers.AkariMind.MU3.Sequence
             PatchLog.WriteLine($"pause game , pauseMsec = {pauseMsec:F4} , ntMgr.currentMsec = {ntMgr.getCurrentMsec():F4} , ntMgr.currentFrame = {ntMgr.getCurrentFrame():F4}");
         }
 
-        private void OnRequestResumeGamePlay(ResumeGamePlay message)
+        private IEnumerator OnRequestResumeGamePlay(ResumeGamePlay message)
         {
             PatchLog.WriteLine($"call OnRequestResumeGamePlay() isPause = {isPause} pauseMsec:{pauseMsec}");
+
+            if (message.playGuideSEBeforePlay)
+            {
+                ReaderMain instance = Singleton<ReaderMain>.instance;
+                var currentBpm = instance.composition.bpmList.getLatest(pauseMsec);
+
+                string serialize(TGrid grid, float l) => $"[{(int)(grid.grid / l)},{(int)(grid.grid % l)}]({grid.frame})";
+
+                float msec2grid(BPM t, float msec) => (t.resT * t.bpm) * msec / 2400000f;
+                float grid2msec(BPM t, float grid) => (float)(240000.0 * (double)grid / (double)((float)t.resT * t.bpm));
+
+                var gridOffset = msec2grid(currentBpm, pauseMsec - currentBpm.msec);
+                PatchLog.WriteLine($"call OnRequestResumeGamePlay() gridOffset = {gridOffset}");
+                // 1. 获取pauseMsec对应的tGrid
+                var pauseTGrid = new TGrid(currentBpm.grid + (int)gridOffset);
+                pauseTGrid.setMsec(pauseMsec);
+                PatchLog.WriteLine($"call OnRequestResumeGamePlay() pauseTGrid.grid = {serialize(pauseTGrid, currentBpm.resT)} pauseTGrid.msec = {pauseTGrid.msec}");
+
+                // 2. 通过tGrid获取对应的节拍met
+                var meter = instance.composition.meterChangeList.getLatest(pauseTGrid);
+                PatchLog.WriteLine($"call OnRequestResumeGamePlay() meter.bunshi = {meter.bunshi} meter.bunbo = {meter.bunbo}");
+
+                // 3. 获取节拍长度,计算出delay
+                float delay = grid2msec(currentBpm, meter.gridBeat) / 1000f;
+                PatchLog.WriteLine($"call OnRequestResumeGamePlay() delay = {delay}s");
+
+                var clickDefault = instance.header.clickDefault;
+                if (clickDefault > 0)
+                {
+                    int num = 0;
+                    while (num < clickDefault)
+                    {
+                        yield return new WaitForSeconds(delay);
+                        ntMgrEx.playGuideSE(NotesManagerSE.GuideSE_Count);
+                        num += meter.gridBeat;
+                    }
+                }
+                PatchLog.WriteLine($"call OnRequestResumeGamePlay() play guideSE all done.");
+            }
             ResumeGameInternal();
         }
 
@@ -161,6 +207,7 @@ namespace AkariMindControllers.AkariMind.MU3.Sequence
             Controller.UnregisterSpecifyMessageAllHandler<SeekToGamePlay>();
             Controller.UnregisterSpecifyMessageAllHandler<PrintGamePlayStatus>();
             Controller.UnregisterSpecifyMessageAllHandler<GetNoteManagerValue>();
+            Controller.UnregisterSpecifyMessageAllHandler<PlayGuideSE>();
             Controller.UnregisterSpecifyMessageAllHandler<ReloadFumen>();
         }
 
