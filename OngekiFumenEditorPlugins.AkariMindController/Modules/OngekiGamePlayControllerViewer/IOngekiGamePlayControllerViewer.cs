@@ -14,8 +14,8 @@ namespace OngekiFumenEditorPlugins.AkariMindController.Modules.OngekiGamePlayCon
         Task Pause();
         Task SeekTo(TimeSpan time);
         Task Reload();
-        Task<bool> CheckVailedAndConnected();
-        Task<TimeSpan> CheckVailed();
-        Task<NotesManagerData> GetNotesManagerData();
+        Task<bool> UpdateCheckConnecting();
+        Task<bool> CheckVailed();
+        Task<NotesManagerData?> GetNotesManagerData();
     }
 }

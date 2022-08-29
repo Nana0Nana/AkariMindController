@@ -1,11 +1,28 @@
-﻿using Gemini.Framework;
+﻿using AkiraMindController.Communication;
+using AkiraMindController.Communication.AkariCommand;
+using AkiraMindController.Communication.Connectors.CommonMessages;
+using AkiraMindController.Communication.Connectors.ConnectorImpls.Http;
+using Caliburn.Micro;
+using Gemini.Framework;
 using Gemini.Framework.Services;
+using OngekiFumenEditor.Base;
+using OngekiFumenEditor.Modules.FumenVisualEditor.Kernel;
+using OngekiFumenEditor.Modules.FumenVisualEditor.ViewModels;
+using OngekiFumenEditor.Parser;
+using OngekiFumenEditor.Utils;
 using OngekiFumenEditor.Utils.Attributes;
 using OngekiFumenEditorPlugins.AkariMindController.Modules.OngekiGamePlayControllerViewer.Base;
 using OngekiFumenEditorPlugins.AkariMindController.Modules.OngekiGamePlayControllerViewer.Views;
 using System;
 using System.ComponentModel.Composition;
+using System.IO;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Threading;
+using static AkiraMindController.Communication.Connectors.CommonMessages.Ping;
 
 namespace OngekiFumenEditorPlugins.AkariMindController.Modules.OngekiGamePlayControllerViewer.ViewModels
 {
@@ -16,7 +33,7 @@ namespace OngekiFumenEditorPlugins.AkariMindController.Modules.OngekiGamePlayCon
         public override PaneLocation PreferredLocation => PaneLocation.Bottom;
 
         public bool IsConnected => ConnectStatus == ConnectStatus.Connected;
-        private ConnectStatus connectStatus;
+        private ConnectStatus connectStatus = ConnectStatus.NotConnect;
         public ConnectStatus ConnectStatus
         {
             get => connectStatus;
@@ -27,6 +44,20 @@ namespace OngekiFumenEditorPlugins.AkariMindController.Modules.OngekiGamePlayCon
                 Set(ref connectStatus, value);
                 NotifyOfPropertyChange(() => IsConnected);
             }
+        }
+
+        private string ogkrSavePath;
+        public string OgkrSavePath
+        {
+            get => ogkrSavePath;
+            set => Set(ref ogkrSavePath, value);
+        }
+
+        private FumenVisualEditorViewModel currentEditor;
+        public FumenVisualEditorViewModel CurrentEditor
+        {
+            get => currentEditor;
+            set => Set(ref currentEditor, value);
         }
 
         private int seekTimeMsec;
@@ -44,67 +75,185 @@ namespace OngekiFumenEditorPlugins.AkariMindController.Modules.OngekiGamePlayCon
         }
 
         private int port = 30000;
+        private HttpConnectorClient client;
+        private AbortableThread thread;
+
         public int Port
         {
             get => port;
             set => Set(ref port, value);
         }
 
+        protected override void OnViewLoaded(object view)
+        {
+            base.OnViewLoaded(view);
+
+            DisplayName = "AkariMindController";
+            IoC.Get<IEditorDocumentManager>().OnActivateEditorChanged += OngekiGamePlayControllerViewerViewModel_OnActivateEditorChanged;
+
+            var opt = new JsonSerializerOptions() { IncludeFields = true };
+            SimpleInterfaceImplement.Deserialize = (json, type) => JsonSerializer.Deserialize(json, type, opt);
+            SimpleInterfaceImplement.Serialize = obj => JsonSerializer.Serialize(obj, opt);
+            SimpleInterfaceImplement.Log = x => Log.LogDebug(x);
+
+            thread = new AbortableThread(OnThreadAutomaticCheckConnect);
+            thread.IsBackground = true;
+            thread.Start();
+        }
+
+        private async void OnThreadAutomaticCheckConnect(CancellationToken obj)
+        {
+            while (!obj.IsCancellationRequested)
+            {
+                await Task.Delay(1100);
+                if (client is null)
+                    continue;
+                await UpdateCheckConnecting();
+            }
+        }
+
+        private void OngekiGamePlayControllerViewerViewModel_OnActivateEditorChanged(FumenVisualEditorViewModel @new, FumenVisualEditorViewModel old)
+        {
+            CurrentEditor = @new;
+        }
+
         private void AppendOutputLine(string v)
         {
-            OngekiFumenEditor.Utils.Log.LogInfo($"[akari]{v}");
+            Log.LogInfo($"[akari]{v}");
         }
 
-        public OngekiGamePlayControllerViewerViewModel()
+        public async void Connect()
         {
-            DisplayName = "AkariMindController";
+            client = new HttpConnectorClient(Port);
+            await UpdateCheckConnecting();
         }
 
-        public void Connect()
+        public void OpenOgkrSavePathDialog()
         {
-
+            OgkrSavePath = FileDialogHelper.SaveFile("请指定.ogkr保存的路径用于音击程序读取.", new[] { (".ogkr", "标准音击谱面文件") }) ?? OgkrSavePath;
         }
 
-        public Task Play()
+        public async void GetOgkrSavePathFromGamePlay()
         {
-            throw new NotImplementedException();
+            if (ConnectStatus != ConnectStatus.Connected)
+                return;
+
+            if ((await GetNotesManagerData())?.OgkrFilePath is not string ogkrPath || !File.Exists(ogkrPath))
+                return;
+
+            OgkrSavePath = Path.GetFullPath(ogkrPath);
+            MessageBox.Show("获取成功");
         }
 
-        public Task Pause()
+        public async Task Play()
         {
-            throw new NotImplementedException();
+            if (ConnectStatus != ConnectStatus.Connected)
+                return;
+            await Task.Run(() => client.SendMessage(new ResumeGamePlay()));
         }
 
-        public Task Restart()
+        public async Task Pause()
         {
-            throw new NotImplementedException();
+            if (ConnectStatus != ConnectStatus.Connected)
+                return;
+            await Task.Run(() => client.SendMessage(new PauseGamePlay()));
         }
 
-        public Task SeekTo(TimeSpan time)
+        public async Task Restart()
         {
-            throw new NotImplementedException();
+            if (ConnectStatus != ConnectStatus.Connected)
+                return;
+            await Task.Run(() => client.SendMessage(new RestartGamePlay()));
+        }
+
+        public async Task SeekTo(TimeSpan time)
+        {
+            if (ConnectStatus != ConnectStatus.Connected)
+                return;
+
+            Log.LogError($"akari seek to {time} , playAfterSeek : {IsPlayAfterSeek}");
+            await Task.Run(() => client.SendMessage(new SeekToGamePlay()
+            {
+                audioTimeMsec = (int)time.TotalMilliseconds,
+                playAfterSeek = IsPlayAfterSeek
+            }));
         }
 
         public Task SeekTo() => SeekTo(TimeSpan.FromMilliseconds(SeekTimeMsec));
 
-        public Task Reload()
+        public async Task Reload()
         {
-            throw new NotImplementedException();
+            if (ConnectStatus != ConnectStatus.Connected)
+                return;
+            if (!File.Exists(OgkrSavePath))
+                return;
+            if ((await GetNotesManagerData()) is not NotesManagerData data)
+                return;
+            var currentPlaytime = data.CurrentTime;
+            await GenerateOgkr(OgkrSavePath);
+            await Task.Delay(100);
+            await SeekTo(currentPlaytime);
         }
 
-        public Task<bool> CheckVailedAndConnected()
+        private async Task GenerateOgkr(string ogkrSavePath)
         {
-            throw new NotImplementedException();
+            if (CurrentEditor is null)
+                return;
+
+            if (Type.GetType("OngekiFumenEditorPlugins.OngekiFumenSupport.Kernel.StandardizeFormat,OngekiFumenEditorPlugins.OngekiFumenSupport") is not Type type)
+            {
+                Log.LogError($"AkariMindController can't generate .ogkr because program not apply plugin named 'OngekiFumenSupport'.");
+                return;
+            }
+
+            var method = type.GetMethod("Process").CreateDelegate<Func<OngekiFumen, Task<OngekiFumen>>>(null);
+            var fumen = await method(CurrentEditor.Fumen);
+
+            var data = await IoC.Get<IFumenParserManager>().GetSerializer(ogkrSavePath).SerializeAsync(fumen);
+            await File.WriteAllBytesAsync(ogkrSavePath, data);
+
+            Log.LogError($"AkariMindController generate fumen to {ogkrSavePath}");
         }
 
-        public Task<TimeSpan> CheckVailed()
+        public async Task<bool> UpdateCheckConnecting()
         {
-            throw new NotImplementedException();
+            ConnectStatus = (await Task.Run(() => client?.SendMessageWithResponse<Ping, Pong>()).WithTimeout(1000)) is Pong ?
+                ConnectStatus.Connected : ConnectStatus.Disconnected;
+            return ConnectStatus == ConnectStatus.Connected;
         }
 
-        public Task<NotesManagerData> GetNotesManagerData()
+        public Task<bool> CheckVailed()
         {
-            throw new NotImplementedException();
+            if (ConnectStatus != ConnectStatus.Connected)
+                return Task.FromResult(false);
+            //todo
+            return Task.FromResult(true);
+        }
+
+        public async Task<NotesManagerData?> GetNotesManagerData()
+        {
+            if (ConnectStatus != ConnectStatus.Connected)
+                return null;
+
+            if ((await Task.Run(() => client?.SendMessageWithResponse<GetNoteManagerValue, GetNoteManagerValue.ReturnValue>()) is not GetNoteManagerValue.ReturnValue retVal))
+                return null;
+
+            var msecPerFrame = 1000 / 60.0;
+
+            return new NotesManagerData()
+            {
+                CurrentTime = TimeSpan.FromMilliseconds(retVal.currentFrame * msecPerFrame),
+                InvisibleTime = TimeSpan.FromMilliseconds(retVal.invisibleFrame * msecPerFrame),
+                VisibleTime = TimeSpan.FromMilliseconds(retVal.visibleFrame * msecPerFrame),
+                NoteEndTime = TimeSpan.FromMilliseconds(retVal.noteEndFrame * msecPerFrame),
+                NoteStartTime = TimeSpan.FromMilliseconds(retVal.noteStartFrame * msecPerFrame),
+                PlayEndTime = TimeSpan.FromMilliseconds(retVal.playEndFrame * msecPerFrame),
+                PlayStartTime = TimeSpan.FromMilliseconds(retVal.playStartFrame * msecPerFrame),
+                PlayProgress = retVal.playProgress,
+                OgkrFilePath = retVal.ogkrFilePath,
+                IsPlayEnd = retVal.isPlayEnd,
+                IsPlaying = retVal.isPlaying,
+            };
         }
     }
 }

@@ -24,56 +24,85 @@
     </UserControl.Resources>
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel>
-            <GroupBox Margin="5" Header="连接">
-                <StackPanel Orientation="Horizontal">
-                    <Label VerticalAlignment="Center" Content="Port" />
-                    <TextBox
-                        Width="100"
-                        Margin="10,5,10,5"
-                        VerticalAlignment="Center"
-                        Background="Gray"
-                        Foreground="White"
-                        Text="{Binding Port}">
-                    </TextBox>
-                    <Button cal:Message.Attach="Connect()">连接</Button>
+            <GroupBox Margin="5">
+                <GroupBox.Header>
+                    <Label Content="连接" />
+                </GroupBox.Header>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Orientation="Horizontal">
+                        <Label VerticalAlignment="Center" Content="Port" />
+                        <TextBox
+                            Width="100"
+                            Margin="10,5,10,5"
+                            VerticalAlignment="Center"
+                            Text="{Binding Port}">
+                        </TextBox>
+                        <Button cal:Message.Attach="Connect()">连接</Button>
+                        <Label
+                            Margin="20,0,0,0"
+                            VerticalAlignment="Center"
+                            Content="状态:" />
+                        <TextBlock
+                            Margin="10,0,0,0"
+                            VerticalAlignment="Center"
+                            FontWeight="Bold"
+                            OverridesDefaultStyle="True">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding ConnectStatus, Converter={StaticResource EnumToStringConverter}}" Value="NotConnect">
+                                            <Setter Property="Text" Value="未发起连接" />
+                                            <Setter Property="Foreground" Value="Orange" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding ConnectStatus, Converter={StaticResource EnumToStringConverter}}" Value="Connected">
+                                            <Setter Property="Text" Value="已连接" />
+                                            <Setter Property="Foreground" Value="Green" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding ConnectStatus, Converter={StaticResource EnumToStringConverter}}" Value="Disconnected">
+                                            <Setter Property="Text" Value="连接已断开" />
+                                            <Setter Property="Foreground" Value="red" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
                     <Label
-                        Margin="20,0,0,0"
-                        VerticalAlignment="Center"
-                        Content="状态:" />
-                    <Label
-                        Margin="20,0,0,0"
-                        VerticalAlignment="Center"
-                        OverridesDefaultStyle="True">
-                        <Label.Style>
-                            <Style TargetType="Label">
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding ConnectStatus, Converter={StaticResource EnumToStringConverter}}" Value="NotConnect">
-                                        <Setter Property="Content" Value="未发起连接" />
-                                        <Setter Property="Foreground" Value="Orange" />
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding ConnectStatus, Converter={StaticResource EnumToStringConverter}}" Value="Connected">
-                                        <Setter Property="Content" Value="已连接" />
-                                        <Setter Property="Foreground" Value="Green" />
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding ConnectStatus, Converter={StaticResource EnumToStringConverter}}" Value="Disconnected">
-                                        <Setter Property="Content" Value="连接已断开" />
-                                        <Setter Property="Foreground" Value="red" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Label.Style>
+                        Grid.Column="1"
+                        Margin="0,0,10,0"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center">
+                        <Hyperlink Click="Hyperlink_RequestNavigate">使用教程</Hyperlink>
                     </Label>
-                </StackPanel>
+                </Grid>
             </GroupBox>
-            <GroupBox Margin="5" Header="控制">
+            <GroupBox Margin="5">
+                <GroupBox.Header>
+                    <Label Content="控制" />
+                </GroupBox.Header>
                 <StackPanel>
                     <StackPanel Orientation="Horizontal">
-                        <Button cal:Message.Attach="Reload()" IsEnabled="{Binding IsConnected}">Reload</Button>
+                        <Label VerticalAlignment="Center">.ogkr谱面生成路径</Label>
+                        <TextBox
+                            Width="350"
+                            Margin="10,5,10,5"
+                            Padding="2"
+                            VerticalAlignment="Center"
+                            IsReadOnly="True"
+                            Text="{Binding OgkrSavePath}">
+                        </TextBox>
+                        <Button cal:Message.Attach="OpenOgkrSavePathDialog()" IsEnabled="{Binding IsConnected}">浏览</Button>
+                        <Button cal:Message.Attach="Reload()" IsEnabled="{Binding IsConnected}">游戏重新加载谱面</Button>
+                        <Button cal:Message.Attach="GetOgkrSavePathFromGamePlay()" IsEnabled="{Binding IsConnected}">获取谱面路径</Button>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal">
-                        <Button cal:Message.Attach="Play()" IsEnabled="{Binding IsConnected}">Play</Button>
-                        <Button cal:Message.Attach="Pause()" IsEnabled="{Binding IsConnected}">Pause</Button>
-                        <Button cal:Message.Attach="Restart()" IsEnabled="{Binding IsConnected}">Restart</Button>
+                        <Button cal:Message.Attach="Play()" IsEnabled="{Binding IsConnected}">播放</Button>
+                        <Button cal:Message.Attach="Pause()" IsEnabled="{Binding IsConnected}">暂停</Button>
+                        <Button cal:Message.Attach="Restart()" IsEnabled="{Binding IsConnected}">重开</Button>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal">
                         <Label VerticalAlignment="Center" Content="跳转" />
@@ -82,8 +111,6 @@
                             Margin="10,5,10,5"
                             Padding="2"
                             VerticalAlignment="Center"
-                            Background="Gray"
-                            Foreground="White"
                             Text="{Binding SeekTimeMsec}">
 
                         </TextBox>

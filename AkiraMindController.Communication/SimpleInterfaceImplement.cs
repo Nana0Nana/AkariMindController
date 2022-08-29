@@ -12,12 +12,12 @@ namespace AkiraMindController.Communication
         public static Action<string> Log { get; set; }
     }
 
-    public static class Log
+    internal static class Log
     {
         public static void WriteLine(string msg) => SimpleInterfaceImplement.Log(msg);
     }
 
-    public static class Json
+    internal static class Json
     {
         public static T Deserialize<T>(string json) => (T)SimpleInterfaceImplement.Deserialize(json, typeof(T));
         public static object Deserialize(string json, Type type) => SimpleInterfaceImplement.Deserialize(json, type);

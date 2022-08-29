@@ -1,4 +1,5 @@
 ﻿using Microsoft.CodeAnalysis;
+using OngekiFumenEditor.Utils;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -24,6 +25,11 @@ namespace OngekiFumenEditorPlugins.AkariMindController.Modules.OngekiGamePlayCon
         public OngekiGamePlayControllerViewerView()
         {
             InitializeComponent();
+        }
+
+        private void Hyperlink_RequestNavigate(object sender, RoutedEventArgs e)
+        {
+            ProcessUtils.OpenUrl("https://github.com/MikiraSora/AkariMindController/wiki/OngekiFumenEditor%E6%8F%92%E4%BB%B6%E4%BD%BF%E7%94%A8");
         }
     }
 }
