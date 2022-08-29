@@ -41,6 +41,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AkariCommand\GetNoteManagerValue.cs" />
+    <Compile Include="AkariCommand\ReloadFumen.cs" />
     <Compile Include="Connectors\CommonMessages\Message.cs" />
     <Compile Include="AkariCommand\PauseGamePlay.cs" />
     <Compile Include="AkariCommand\RestartGamePlay.cs" />

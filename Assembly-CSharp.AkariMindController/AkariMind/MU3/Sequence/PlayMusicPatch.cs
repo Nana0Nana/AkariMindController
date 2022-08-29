@@ -41,10 +41,17 @@ namespace AkariMindControllers.AkariMind.MU3.Sequence
             Controller.RegisterMessageHandler<ResumeGamePlay>(OnRequestResumeGamePlay);
             Controller.RegisterMessageHandler<PauseGamePlay>(OnRequestPauseGamePlay);
             Controller.RegisterMessageHandler<PrintGamePlayStatus>(OnRequestPrintGamePlayStatus);
+            Controller.RegisterMessageHandler<ReloadFumen>(OnReloadFumen);
             Controller.RegisterMessageHandler<GetNoteManagerValue>(OnRequestGetNoteManagerValue);
             Controller.RegisterMessageHandler<SeekToGamePlay>(OnRequestSeekToGamePlay);
 
             isPause = false;
+        }
+
+        private void OnReloadFumen(ReloadFumen message, IResponser responser)
+        {
+            PatchLog.WriteLine($"call OnReloadFumen() message.checkOgkrFilePath = {message.checkOgkrFilePath}");
+            Singleton<ReaderMain>.instance.loadScore(message.checkOgkrFilePath);
         }
 
         private void OnRequestGetNoteManagerValue(GetNoteManagerValue message, IResponser responser)
@@ -154,6 +161,7 @@ namespace AkariMindControllers.AkariMind.MU3.Sequence
             Controller.UnregisterSpecifyMessageAllHandler<SeekToGamePlay>();
             Controller.UnregisterSpecifyMessageAllHandler<PrintGamePlayStatus>();
             Controller.UnregisterSpecifyMessageAllHandler<GetNoteManagerValue>();
+            Controller.UnregisterSpecifyMessageAllHandler<ReloadFumen>();
         }
 
         private IEnumerator OnRequestRestartGamePlay(RestartGamePlay message)

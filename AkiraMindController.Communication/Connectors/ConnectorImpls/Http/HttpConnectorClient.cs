@@ -26,12 +26,13 @@ namespace AkiraMindController.Communication.Connectors.ConnectorImpls.Http
             Log.WriteLine($"[client] posted request : {url}");
             try
             {
-                var resp = (HttpWebResponse)request.GetResponse();
+                using var resp = (HttpWebResponse)request.GetResponse();
                 Log.WriteLine($"[client] request response : {resp.StatusCode}");
 
                 if (respStreamProcFunc is not null)
                 {
-                    respStreamProcFunc(resp.GetResponseStream());
+                    using var stream = resp.GetResponseStream();
+                    respStreamProcFunc(stream);
                     Log.WriteLine($"[client] response stream has been processed");
                 }
             }

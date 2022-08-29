@@ -211,6 +211,7 @@ namespace OngekiFumenEditorPlugins.AkariMindController.Modules.OngekiGamePlayCon
 
             var data = await IoC.Get<IFumenParserManager>().GetSerializer(ogkrSavePath).SerializeAsync(fumen);
             await File.WriteAllBytesAsync(ogkrSavePath, data);
+            await Task.Run(() => client?.SendMessage(new ReloadFumen { checkOgkrFilePath = ogkrSavePath }));
 
             Log.LogError($"AkariMindController generate fumen to {ogkrSavePath}");
         }
