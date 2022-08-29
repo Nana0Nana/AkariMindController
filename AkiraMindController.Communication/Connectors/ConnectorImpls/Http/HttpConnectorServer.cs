@@ -49,7 +49,7 @@ namespace AkiraMindController.Communication.Connectors.ConnectorImpls.Http
                     }
                     catch (Exception e)
                     {
-                        Log.WriteLine($"[server] request process throw exception : {e.Message} StackTrace : {Json.Serialize(e.StackTrace)}");
+                        Log.WriteLine($"[server] request process throw exception : {e.Message} StackTrace : {Convert.ToBase64String(Encoding.UTF8.GetBytes(e.StackTrace))}");
                     }
                 }
             })
