@@ -86,20 +86,6 @@
                 </GroupBox.Header>
                 <StackPanel>
                     <StackPanel Orientation="Horizontal">
-                        <Label VerticalAlignment="Center">.ogkr谱面生成路径</Label>
-                        <TextBox
-                            Width="350"
-                            Margin="10,5,10,5"
-                            Padding="2"
-                            VerticalAlignment="Center"
-                            IsReadOnly="True"
-                            Text="{Binding OgkrSavePath}">
-                        </TextBox>
-                        <Button cal:Message.Attach="OpenOgkrSavePathDialog()" IsEnabled="{Binding IsConnected}">浏览</Button>
-                        <Button cal:Message.Attach="Reload()" IsEnabled="{Binding IsConnected}">游戏重新加载谱面</Button>
-                        <Button cal:Message.Attach="GetOgkrSavePathFromGamePlay()" IsEnabled="{Binding IsConnected}">获取谱面路径</Button>
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal">
                         <CheckBox
                             Margin="10,5,10,5"
                             Padding="2"
@@ -136,6 +122,20 @@
                             IsEnabled="{Binding IsConnected}">
                             执行跳转
                         </Button>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Label VerticalAlignment="Center">.ogkr谱面生成路径</Label>
+                        <TextBox
+                            Width="350"
+                            Margin="10,5,10,5"
+                            Padding="2"
+                            VerticalAlignment="Center"
+                            IsReadOnly="True"
+                            Text="{Binding OgkrSavePath}">
+                        </TextBox>
+                        <Button cal:Message.Attach="OpenOgkrSavePathDialog()" IsEnabled="{Binding IsConnected}">浏览</Button>
+                        <Button cal:Message.Attach="Reload()" IsEnabled="{Binding IsConnected}">游戏重新加载谱面</Button>
+                        <Button cal:Message.Attach="GetOgkrSavePathFromGamePlay()" IsEnabled="{Binding IsConnected}">获取谱面路径</Button>
                     </StackPanel>
                 </StackPanel>
             </GroupBox>
