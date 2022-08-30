@@ -132,7 +132,11 @@ namespace OngekiFumenEditorPlugins.AkariMindController.Modules.OngekiGamePlayCon
         public async void Connect()
         {
             client = new HttpConnectorClient(Port);
-            await UpdateCheckConnecting();
+            if (!await UpdateCheckConnecting())
+            {
+                client = default;
+                ConnectStatus = ConnectStatus.Disconnected;
+            }
         }
 
         public void OpenOgkrSavePathDialog()
