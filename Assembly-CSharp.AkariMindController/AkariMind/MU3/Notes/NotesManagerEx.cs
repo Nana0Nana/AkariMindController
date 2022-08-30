@@ -41,16 +41,12 @@ namespace AkariMindControllers.AkariMind.MU3.Notes
         {
             PatchLog.WriteLine($"call playGuideSE() guideSEType = {guideSEType}");
 
-            var j = (int)guideSEType;
-            var num3 = 0f;
-            if (j == 1 || j == 2)
-            {
-                num3 = GameOption.volGuide;
-            }
-            if (num3 > 0.01f)
-            {
-                Singleton<SoundManager>.instance.playVolume(_seAnswerSound[j], isLoop: false, num3);
-            }
+            var soundID = (int)guideSEType;
+            var vol = 1f;
+            if (soundID == 1 || soundID == 2)
+                vol = GameOption.volGuide;
+            if (vol > 0.01f)
+                Singleton<SoundManager>.instance.playVolume(_seAnswerSound[soundID], isLoop: false, vol);
         }
     }
 }

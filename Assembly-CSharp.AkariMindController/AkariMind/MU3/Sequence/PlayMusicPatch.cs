@@ -192,6 +192,8 @@ namespace AkariMindControllers.AkariMind.MU3.Sequence
                         ntMgrEx.playGuideSE(NotesManagerSE.GuideSE_Count);
                         num += meter.gridBeat;
                     }
+                    //补多一拍
+                    yield return new WaitForSeconds(delay);
                 }
                 PatchLog.WriteLine($"call OnRequestResumeGamePlay() play guideSE all done.");
             }
