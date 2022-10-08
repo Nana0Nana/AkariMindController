@@ -28,6 +28,7 @@ namespace AkiraMindController.Communication.Connectors.ConnectorImpls.Http
                 handler.Handle(param, responser);
 
             r.Response.StatusCode = 200;
+            r.Response.OutputStream.Close();
             r.Response.Close();
         }
 

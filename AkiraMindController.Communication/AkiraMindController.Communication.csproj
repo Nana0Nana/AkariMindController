@@ -40,7 +40,9 @@
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AkariCommand\SetNoteManagerValue.cs" />
     <Compile Include="AkariCommand\GetNoteManagerValue.cs" />
+    <Compile Include="AkariCommand\AutoPlay.cs" />
     <Compile Include="AkariCommand\ReloadFumen.cs" />
     <Compile Include="AkariCommand\PlayGuideSE.cs" />
     <Compile Include="Connectors\CommonMessages\Message.cs" />

@@ -13,6 +13,8 @@ namespace AkiraMindController.Communication
             var jsonStr = Encoding.UTF8.GetString(Convert.FromBase64String(payloadStr));
             Log.WriteLine($"[utils] jsonStr : {jsonStr}");
             var payload = Json.Deserialize<Payload>(jsonStr);
+            if (payload is null)
+                return default;
             Log.WriteLine($"[utils] payload.typeName : {payload.typeName}");
             var type = Type.GetType(payload.typeName);
             Log.WriteLine($"[utils] payloadStr : {type}");
