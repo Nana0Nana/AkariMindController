@@ -13,15 +13,28 @@ namespace AkiraMindController.Communication.AkariCommand
         {
             public float playEndFrame;
             public float noteEndFrame;
+
             public float playStartFrame;
             public float noteStartFrame;
+
             public float visibleFrame;
             public float invisibleFrame;
+
             public float currentFrame;
             public float playProgress;
+
             public bool isPlaying;
             public bool isPlayEnd;
+
             public string ogkrFilePath;
+
+            public float playerPosX;
+
+            public float posInR;
+            public float posInC;
+            public float posInL;
+
+            public bool autoPlay;
         }
     }
 }

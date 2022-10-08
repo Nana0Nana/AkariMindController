@@ -45,9 +45,28 @@ namespace AkariMindControllers.AkariMind.MU3.Sequence
             Controller.RegisterMessageHandler<ReloadFumen>(OnReloadFumen);
             Controller.RegisterMessageHandler<PlayGuideSE>(OnPlayGuideSE);
             Controller.RegisterMessageHandler<GetNoteManagerValue>(OnRequestGetNoteManagerValue);
+            Controller.RegisterMessageHandler<AutoPlay>(OnAutoPlay);
             Controller.RegisterMessageHandler<SeekToGamePlay>(OnRequestSeekToGamePlay);
+            Controller.RegisterMessageHandler<SetNoteManagerValue>(OnSetNoteManagerValue);
 
             isPause = false;
+        }
+
+        private void OnSetNoteManagerValue(SetNoteManagerValue message, IResponser responser)
+        {
+            switch (message.name)
+            {
+                case nameof(NotesManagerEx.fakeButtomMsec):
+                    ntMgrEx.fakeButtomMsec = message.value;
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        private void OnAutoPlay(AutoPlay message, IResponser responser)
+        {
+            ntMgrEx.enableAutoPlay(message.isEnable);
         }
 
         private void OnPlayGuideSE(PlayGuideSE message, IResponser responser)
@@ -63,19 +82,35 @@ namespace AkariMindControllers.AkariMind.MU3.Sequence
 
         private void OnRequestGetNoteManagerValue(GetNoteManagerValue message, IResponser responser)
         {
+            var x = ntMgr.getPlayerPos().x;
+            var field = ntMgr.fieldState;
+
             responser.Response(new GetNoteManagerValue.ReturnValue()
             {
                 playEndFrame = ntMgr.getEndPlayFrame(),
                 noteEndFrame = ntMgr.getEndNoteFrame(),
+
                 playStartFrame = ntMgrEx.getStartPlayFrame(),
                 noteStartFrame = ntMgrEx.getStartNoteFrame(),
+
                 visibleFrame = ntMgrEx.getFrameVisible(),
                 invisibleFrame = ntMgrEx.getFrameInvisible(),
+
                 currentFrame = ntMgrEx.getCurrentFrame(),
                 playProgress = ntMgrEx.getPlayProgress(),
+
                 isPlaying = ntMgrEx.isPlaying,
                 isPlayEnd = ntMgrEx.isPlayEnd,
-                ogkrFilePath = SingletonStateMachine<DataManager, DataManager.EState>.instance.getOgkrPath(_sessionInfo.musicData.id, _sessionInfo.musicLevel)
+
+                ogkrFilePath = SingletonStateMachine<DataManager, DataManager.EState>.instance.getOgkrPath(_sessionInfo.musicData.id, _sessionInfo.musicLevel),
+
+                playerPosX = x * 10,//adjust
+
+                posInC = field.area.posInC,
+                posInL = field.area.posInL,
+                posInR = field.area.posInR,
+
+                autoPlay = ntMgrEx.isAutoPlay()
             });
         }
 
@@ -211,6 +246,8 @@ namespace AkariMindControllers.AkariMind.MU3.Sequence
             Controller.UnregisterSpecifyMessageAllHandler<GetNoteManagerValue>();
             Controller.UnregisterSpecifyMessageAllHandler<PlayGuideSE>();
             Controller.UnregisterSpecifyMessageAllHandler<ReloadFumen>();
+            Controller.UnregisterSpecifyMessageAllHandler<AutoPlay>();
+            Controller.UnregisterSpecifyMessageAllHandler<SetNoteManagerValue>();
         }
 
         private IEnumerator OnRequestRestartGamePlay(RestartGamePlay message)

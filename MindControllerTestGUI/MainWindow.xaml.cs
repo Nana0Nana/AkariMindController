@@ -21,6 +21,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
+using static AkiraMindController.Communication.AkariCommand.GetNoteManagerValue;
 using static AkiraMindController.Communication.Connectors.CommonMessages.Ping;
 
 namespace MindControllerTestGUI
@@ -82,6 +83,80 @@ namespace MindControllerTestGUI
         public static readonly DependencyProperty IsPlayAfterSeekProperty =
             DependencyProperty.Register("IsPlayAfterSeek", typeof(bool), typeof(MainWindow), new PropertyMetadata(false));
 
+        public float FieldLeftX
+        {
+            get { return (float)GetValue(FieldLeftXProperty); }
+            set { SetValue(FieldLeftXProperty, value); }
+        }
+
+        // Using a DependencyProperty as the backing store for FieldLeftX.  This enables animation, styling, binding, etc...
+        public static readonly DependencyProperty FieldLeftXProperty =
+            DependencyProperty.Register("FieldLeftX", typeof(float), typeof(MainWindow), new PropertyMetadata(0f));
+
+        public float FieldRightX
+        {
+            get { return (float)GetValue(FieldRightXProperty); }
+            set { SetValue(FieldRightXProperty, value); }
+        }
+
+        // Using a DependencyProperty as the backing store for FieldRightX.  This enables animation, styling, binding, etc...
+        public static readonly DependencyProperty FieldRightXProperty =
+            DependencyProperty.Register("FieldRightX", typeof(float), typeof(MainWindow), new PropertyMetadata(0f));
+
+        public float PlayerX
+        {
+            get { return (float)GetValue(PlayerXProperty); }
+            set { SetValue(PlayerXProperty, value); }
+        }
+
+        // Using a DependencyProperty as the backing store for PlayerX.  This enables animation, styling, binding, etc...
+        public static readonly DependencyProperty PlayerXProperty =
+            DependencyProperty.Register("PlayerX", typeof(float), typeof(MainWindow), new PropertyMetadata(0f));
+
+        public float FieldCenterX
+        {
+            get { return (float)GetValue(FieldCenterXProperty); }
+            set { SetValue(FieldCenterXProperty, value); }
+        }
+
+        // Using a DependencyProperty as the backing store for FieldCenterX.  This enables animation, styling, binding, etc...
+        public static readonly DependencyProperty FieldCenterXProperty =
+            DependencyProperty.Register("FieldCenterX", typeof(float), typeof(MainWindow), new PropertyMetadata(0f));
+
+        public float JudeDraw
+        {
+            get { return (float)GetValue(JudeDrawProperty); }
+            set { SetValue(JudeDrawProperty, value); }
+        }
+
+        // Using a DependencyProperty as the backing store for JudeDraw.  This enables animation, styling, binding, etc...
+        public static readonly DependencyProperty JudeDrawProperty =
+            DependencyProperty.Register("JudeDraw", typeof(float), typeof(MainWindow), new PropertyMetadata(0f));
+
+        public bool IsEnableAutoPlay
+        {
+            get { return (bool)GetValue(IsEnableAutoPlayProperty); }
+            set { SetValue(IsEnableAutoPlayProperty, value); }
+        }
+
+        // Using a DependencyProperty as the backing store for IsEnableAutoPlay.  This enables animation, styling, binding, etc...
+        public static readonly DependencyProperty IsEnableAutoPlayProperty =
+            DependencyProperty.Register("IsEnableAutoPlay", typeof(bool), typeof(MainWindow), new PropertyMetadata(false, (e, s) => ((MainWindow)e).OnIsEnableAutoPlayChanged()));
+
+
+
+        public float FakeButtomSec
+        {
+            get { return (float)GetValue(FakeButtomSecProperty); }
+            set { SetValue(FakeButtomSecProperty, value); }
+        }
+
+        // Using a DependencyProperty as the backing store for FakeButtomSec.  This enables animation, styling, binding, etc...
+        public static readonly DependencyProperty FakeButtomSecProperty =
+            DependencyProperty.Register("FakeButtomSec", typeof(float), typeof(MainWindow), new PropertyMetadata(500f));
+
+
+
         private HttpConnectorClient client;
         private bool isConnected;
         private DispatcherTimer timer;
@@ -96,13 +171,36 @@ namespace MindControllerTestGUI
             SimpleInterfaceImplement.Log = x => Debug.WriteLine(x);
 
             timer = new DispatcherTimer();
-            timer.Interval = TimeSpan.FromSeconds(10);
+            var ms = 500;
+            var pingMs = 10000;
+            timer.Interval = TimeSpan.FromMilliseconds(ms);
+            var i = 0;
             timer.Tick += (a, b) =>
             {
-                IsConnected = client?.SendMessageWithResponse<Ping, Pong>() is Pong;
+                if (i++ > pingMs / ms)
+                {
+                    IsConnected = client?.SendMessageWithResponse<Ping, Pong>() is Pong;
+                    i = 0;
+                }
+
+                if (IsConnected && client?.SendMessageWithResponse<GetNoteManagerValue, ReturnValue>() is ReturnValue data)
+                {
+                    FieldLeftX = data.posInL;
+                    FieldRightX = data.posInR;
+                    FieldCenterX = data.posInC;
+                    PlayerX = data.playerPosX;
+                }
             };
 
             timer.Start();
+        }
+
+        private void OnIsEnableAutoPlayChanged()
+        {
+            client.SendMessage(new AutoPlay()
+            {
+                isEnable = IsEnableAutoPlay
+            });
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
@@ -132,7 +230,7 @@ namespace MindControllerTestGUI
         private void Button_Click_4(object sender, RoutedEventArgs e)
         {
             //getData
-            var result = client.SendMessageWithResponse<GetNoteManagerValue, GetNoteManagerValue.ReturnValue>();
+            var result = client.SendMessageWithResponse<GetNoteManagerValue, ReturnValue>();
             AppendOutputLine(JsonConvert.SerializeObject(result, Formatting.Indented));
         }
 
@@ -159,6 +257,11 @@ namespace MindControllerTestGUI
         {
             //clear
             Output = "";
+        }
+
+        private void Button_Click_7(object sender, RoutedEventArgs e)
+        {
+            client.SendMessage(new SetNoteManagerValue() { name = "fakeButtomMsec", value = FakeButtomSec });
         }
     }
 }

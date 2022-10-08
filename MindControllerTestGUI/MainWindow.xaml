@@ -70,6 +70,30 @@
             </StackPanel>
             <StackPanel Orientation="Horizontal">
                 <Button Click="Button_Click_6">Clear</Button>
+                <TextBox
+                    Width="100"
+                    Margin="10,5,10,5"
+                    Padding="2"
+                    VerticalAlignment="Center"
+                    Background="Gray"
+                    Foreground="White"
+                    Text="{Binding FakeButtomSec}">
+                </TextBox>
+                <Button Click="Button_Click_7">FakeButtomSec</Button>
+            </StackPanel>
+            <StackPanel Margin="10,5,10,5" Orientation="Horizontal">
+                <CheckBox VerticalAlignment="Center" IsChecked="{Binding IsEnableAutoPlay}">AutoPlay</CheckBox>
+                <StackPanel Margin="10,0,0,0">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{Binding FieldLeftX, StringFormat=LeftX: {0:F2}}" />
+                        <TextBlock Margin="5,0,5,0" Text="{Binding FieldCenterX, StringFormat=CenterX: {0:F2}}" />
+                        <TextBlock Text="{Binding FieldRightX, StringFormat=RightX: {0:F2}}" />
+                    </StackPanel>
+                    <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
+                        <TextBlock Text="{Binding PlayerX, StringFormat=PlayerX: {0:F2}}" />
+                        <TextBlock Text="{Binding JudeDraw, StringFormat=JudgeDraw: {0:F2}}" />
+                    </StackPanel>
+                </StackPanel>
             </StackPanel>
         </StackPanel>
 
