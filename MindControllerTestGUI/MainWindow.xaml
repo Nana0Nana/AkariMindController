@@ -6,8 +6,8 @@
     xmlns:local="clr-namespace:MindControllerTestGUI"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Title="AkariMindControllerTestGUI"
-    Width="350"
-    Height="600"
+    Width="450"
+    Height="700"
     DataContext="{Binding RelativeSource={RelativeSource Self}}"
     ResizeMode="NoResize"
     mc:Ignorable="d">
@@ -15,7 +15,7 @@
         <Style TargetType="Button">
             <Setter Property="Padding" Value="10,5,10,5">
             </Setter>
-            <Setter Property="Margin" Value="10,5,10,5">
+            <Setter Property="Margin" Value="5">
             </Setter>
         </Style>
     </Window.Resources>
@@ -41,6 +41,7 @@
                 <Button Click="Button_Click_2" IsEnabled="{Binding IsConnected}">Resume</Button>
                 <Button Click="Button_Click_3" IsEnabled="{Binding IsConnected}">Restart</Button>
                 <Button Click="Button_Click_4" IsEnabled="{Binding IsConnected}">GetData</Button>
+                <Button Click="Button_Click_8" IsEnabled="{Binding IsConnected}">GetAutoFaderData</Button>
             </StackPanel>
             <StackPanel Orientation="Horizontal">
                 <TextBox

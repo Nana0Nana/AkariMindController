@@ -46,6 +46,7 @@ namespace AkariMindControllers.AkariMind.MU3.Sequence
             Controller.RegisterMessageHandler<PlayGuideSE>(OnPlayGuideSE);
             Controller.RegisterMessageHandler<GetNoteManagerValue>(OnRequestGetNoteManagerValue);
             Controller.RegisterMessageHandler<AutoPlay>(OnAutoPlay);
+            Controller.RegisterMessageHandler<GetNoteManagerAutoPlayData>(OnGetNoteManagerAutoPlayData);
             Controller.RegisterMessageHandler<SeekToGamePlay>(OnRequestSeekToGamePlay);
             Controller.RegisterMessageHandler<SetNoteManagerValue>(OnSetNoteManagerValue);
 
@@ -70,6 +71,19 @@ namespace AkariMindControllers.AkariMind.MU3.Sequence
         private void OnAutoPlay(AutoPlay message, IResponser responser)
         {
             ntMgrEx.enableAutoPlay(message.isEnable);
+        }
+
+        private void OnGetNoteManagerAutoPlayData(GetNoteManagerAutoPlayData message, IResponser responser)
+        {
+            var ret = new GetNoteManagerAutoPlayData.ReturnValue()
+            {
+                autoFader = ntMgrEx.autoFaderPre,
+                autoPlay = ntMgrEx.isAutoPlay(),
+                curFaderTargetStr = ntMgrEx.curFaderTarget.Serialize(),
+                prevFaderTargetStr = ntMgrEx.prevFaderTarget.Serialize(),
+            };
+
+            responser.Response(ret);
         }
 
         private void OnPlayGuideSE(PlayGuideSE message, IResponser responser)

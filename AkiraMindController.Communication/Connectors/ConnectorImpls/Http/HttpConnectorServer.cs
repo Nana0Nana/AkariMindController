@@ -1,6 +1,7 @@
 ﻿using AkiraMindController.Communication.Bases;
 using AkiraMindController.Communication.Utils;
 using System;
+using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading;
@@ -36,15 +37,20 @@ namespace AkiraMindController.Communication.Connectors.ConnectorImpls.Http
 
         public void Start()
         {
-            Log.WriteLine($"TEST : {Json.Serialize(new AutoFaderTarget()
+            var c = new AutoFaderTarget()
             {
                 bellRanges = new ValueRange[] { new(1, 4), new(5, 6) },
                 damageRanges = new ValueRange[] { new(2, 5), new(6, 7) },
                 targetRanges = new ValueRange[] { new(3, 6), new(7, 8) },
                 moveableRange = new ValueRange(100, 600),
                 finalTargetFrame = 2857,
-                finalTargetPlace = 1234
-            })}");
+                targetPlaceRange = new ValueRange(5000, 6000)
+            }.Serialize();
+            Log.WriteLine($"TEST : {c}");
+
+            var r = new AutoFaderTarget();
+            r.Deerialize(c);
+            Log.WriteLine($"TEST2 : {string.Join(",", r.damageRanges.Select(x=>x.ToString()).ToArray())}");
 
             server.Start();
             thread?.Abort();

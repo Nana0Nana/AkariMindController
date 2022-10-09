@@ -1,5 +1,6 @@
 ﻿using AkiraMindController.Communication;
 using AkiraMindController.Communication.AkariCommand;
+using AkiraMindController.Communication.Bases;
 using AkiraMindController.Communication.Connectors.CommonMessages;
 using AkiraMindController.Communication.Connectors.ConnectorImpls.Http;
 using Newtonsoft.Json;
@@ -213,6 +214,7 @@ namespace MindControllerTestGUI
         {
             //connect 
             client = new HttpConnectorClient(Port);
+            IsConnected = client?.SendMessageWithResponse<Ping, Pong>() is Pong;
         }
 
         private void Button_Click_2(object sender, RoutedEventArgs e)
@@ -262,6 +264,37 @@ namespace MindControllerTestGUI
         private void Button_Click_7(object sender, RoutedEventArgs e)
         {
             client.SendMessage(new SetNoteManagerValue() { name = "fakeButtomMsec", value = FakeButtomSec });
+        }
+
+        private void Button_Click_8(object sender, RoutedEventArgs e)
+        {
+            if (client.SendMessageWithResponse<GetNoteManagerAutoPlayData, GetNoteManagerAutoPlayData.ReturnValue>() is not GetNoteManagerAutoPlayData.ReturnValue data)
+                return;
+
+            void print(AutoFaderTarget r)
+            {
+                AppendOutputLine($"finalTargetPlace : {r.targetPlaceRange}");
+                AppendOutputLine($"finalTargetFrame : {r.finalTargetFrame}");
+
+                AppendOutputLine($"moveableRange : {r.moveableRange}");
+                AppendOutputLine($"damageRanges : {string.Join(" ", r.damageRanges.Select(x => x.ToString()).ToArray())}");
+                AppendOutputLine($"bellRanges : {string.Join(" ", r.bellRanges.Select(x => x.ToString()).ToArray())}");
+                AppendOutputLine($"targetRanges : {string.Join(" ", r.targetRanges.Select(x => x.ToString()).ToArray())}");
+            }
+
+            AppendOutputLine($"------------GetNoteManagerAutoPlayData.ReturnValue dumper-----------");
+            AppendOutputLine($"autoPlay: {data.autoPlay}");
+            AppendOutputLine($"autoFader: {data.autoFader}");
+            AppendOutputLine($"------------curFaderTarget-----------");
+            var curFaderTarget = new AutoFaderTarget();
+            curFaderTarget.Deerialize(data.curFaderTargetStr);
+            print(curFaderTarget);
+            AppendOutputLine($"------------prevFaderTarget-----------");
+            var prevFaderTarget = new AutoFaderTarget();
+            curFaderTarget.Deerialize(data.prevFaderTargetStr);
+            print(prevFaderTarget);
+            AppendOutputLine($"--------------------------------------------");
+
         }
     }
 }

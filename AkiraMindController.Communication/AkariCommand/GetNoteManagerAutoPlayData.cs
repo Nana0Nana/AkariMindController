@@ -15,8 +15,8 @@ namespace AkiraMindController.Communication.AkariCommand
             public bool autoPlay;
             public float autoFader;
 
-            public AutoFaderTarget curFaderTarget;
-            public AutoFaderTarget prevFaderTarget;
+            public string curFaderTargetStr;
+            public string prevFaderTargetStr;
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using AkariMindControllers.Utils;
+using AkiraMindController.Communication.Bases;
 using AkiraMindController.Communication.Utils;
 using JetBrains.Annotations;
 using MonoMod;
@@ -69,24 +70,32 @@ namespace AkariMindControllers.AkariMind.MU3.Notes
             return isEnableAutoPlay;
         }
 
+        public extern void orig_reset();
+        public void reset()
+        {
+            orig_reset();
+            curFaderTarget = default;
+            prevFaderTarget = default;
+        }
+
         private extern void orig_createFieldState(float frame, ref FieldState fieldState);
         private void createFieldState(float frame, ref FieldState fieldState) => orig_createFieldState(frame, ref fieldState);
 
-
         public extern void orig_damagePlayer(Damage type, int damageXM);
+
+        void print(AutoFaderTarget r)
+        {
+            PatchLog.WriteLine($"finalTargetPlace : {r.targetPlaceRange}");
+            PatchLog.WriteLine($"finalTargetFrame : {r.finalTargetFrame}");
+
+            PatchLog.WriteLine($"moveableRange : {r.moveableRange}");
+            PatchLog.WriteLine($"damageRanges : {string.Join(" ", r.damageRanges.Select(x => x.ToString()).ToArray())}");
+            PatchLog.WriteLine($"bellRanges : {string.Join(" ", r.bellRanges.Select(x => x.ToString()).ToArray())}");
+            PatchLog.WriteLine($"targetRanges : {string.Join(" ", r.targetRanges.Select(x => x.ToString()).ToArray())}");
+        }
+
         public void damagePlayer(Damage type, int damageXM)
         {
-            void print(AutoFaderTarget r)
-            {
-                PatchLog.WriteLine($"finalTargetPlace : {r.finalTargetPlace}");
-                PatchLog.WriteLine($"finalTargetFrame : {r.finalTargetFrame}");
-
-                PatchLog.WriteLine($"moveableRange : {r.moveableRange}");
-                PatchLog.WriteLine($"damageRanges : {string.Join(" ", r.damageRanges.Select(x => x.ToString()).ToArray())}");
-                PatchLog.WriteLine($"bellRanges : {string.Join(" ", r.bellRanges.Select(x => x.ToString()).ToArray())}");
-                PatchLog.WriteLine($"targetRanges : {string.Join(" ", r.targetRanges.Select(x => x.ToString()).ToArray())}");
-            }
-
             orig_damagePlayer(type, damageXM);
 
             if (isAutoPlay())
@@ -101,6 +110,25 @@ namespace AkariMindControllers.AkariMind.MU3.Notes
             }
         }
 
+        public extern void orig_setResultEffectAndScore_Bell(bool isHit, int recoverXM, Vector3 posText, Vector3 posBomb);
+        public virtual void setResultEffectAndScore_Bell(bool isHit, int recoverXM, Vector3 posText, Vector3 posBomb)
+        {
+            orig_setResultEffectAndScore_Bell(isHit, recoverXM, posText, posBomb);
+            if (!isHit)
+            {
+                if (isAutoPlay())
+                {
+                    PatchLog.WriteLine($"------------setResultEffectAndScore_Bell() dumper-----------");
+                    PatchLog.WriteLine($"call setResultEffectAndScore_Bell({isHit},{recoverXM},{posText},{posBomb}) at _curFrame:{getCurrentFrame()} ({getCurrentMsec()}ms)");
+                    PatchLog.WriteLine($"------------curFaderTarget-----------");
+                    print(curFaderTarget);
+                    PatchLog.WriteLine($"------------prevFaderTarget-----------");
+                    print(prevFaderTarget);
+                    PatchLog.WriteLine($"--------------------------------------------");
+                }
+            }
+        }
+
         public float fakeButtomMsec = 500;
         public float fakeButtomOffsetLen = 2;
 
@@ -112,17 +140,11 @@ namespace AkariMindControllers.AkariMind.MU3.Notes
 
         public AutoFaderTarget curFaderTarget = default;
         public AutoFaderTarget prevFaderTarget = default;
-        private float prevCalcFrame = int.MinValue;
 
         private float calcAutoPlayFader()
         {
             var curFrame = _curFrame;
-
-            if (curFrame < prevCalcFrame)
-            {
-                prevCalcFrame = int.MinValue;
-                curFaderTarget = prevFaderTarget = default;
-            }
+            var currentFaderPlace = SingletonMonoBehaviour<GameEngine>.instance.gameDeviceManager.getFader();
 
             if (curFrame > curFaderTarget.finalTargetFrame)
             {
@@ -145,7 +167,7 @@ namespace AkariMindControllers.AkariMind.MU3.Notes
                         note = beam
                     },
                     _ => default
-                }).Where(x => x.note is not null && x.frame <= nextFrame).ToArray();
+                }).Where(x => x.note is not null && curFrame < x.frame && x.frame <= nextFrame).ToArray();
 
                 var minNextFrame = filterNote.Length == 0 ? nextFrame : filterNote.Min(x => x.frame);
                 nextFrame = Math.Min(getEndPlayFrame(), minNextFrame);
@@ -220,18 +242,17 @@ namespace AkariMindControllers.AkariMind.MU3.Notes
                     targetRanges = ValueRange.Intersect(safeRanges.Concat(bellRanges));
 
                 //选择必去区域最近的一个点去插值
-                var currentFaderPlace = SingletonMonoBehaviour<GameEngine>.instance.gameDeviceManager.getFader();
                 var calcRanges = targetRanges.Select(x =>
                 {
                     //x表示排序依据，表示中点位置
-                    return new Vector2(x.max - x.min, x.max + x.min);
+                    return new Vector3(x.max - x.min, x.min, x.max);
                 }).OrderByDescending(x => x.x).ToArray();
 
-                var finalTargetPlace = Math.Max(fieldState.area.posCenterL, Math.Min(fieldState.area.posCenterR, calcRanges.Select(x => x.y / 2).FirstOrDefault()));
+                var targetPlaceRange = calcRanges.Select(x => new ValueRange(x.y, x.z)).FirstOrDefault();
 
                 var newFaderTarget = new AutoFaderTarget();
                 newFaderTarget.finalTargetFrame = nextFrame;
-                newFaderTarget.finalTargetPlace = finalTargetPlace;
+                newFaderTarget.targetPlaceRange = targetPlaceRange;
 
                 //record result
                 newFaderTarget.bellRanges = bellRanges.ToArray();
@@ -242,13 +263,25 @@ namespace AkariMindControllers.AkariMind.MU3.Notes
 
                 prevFaderTarget = curFaderTarget;
                 curFaderTarget = newFaderTarget;
+
+                if (prevFaderTarget.finalTargetFrame == curFaderTarget.finalTargetFrame)
+                {
+                    //warn!!!
+                    curFaderTarget = newFaderTarget;
+                }
             }
 
             //calc actualX
-            var adjustPlace = MathUtils.CalculateXFromTwoPointFormFormula(_curFrame, prevFaderTarget.finalTargetPlace, prevFaderTarget.finalTargetFrame, curFaderTarget.finalTargetPlace, curFaderTarget.finalTargetFrame);
-            adjustPlace = Math.Max(fieldState.area.posCenterL, Math.Min(fieldState.area.posCenterR, adjustPlace));
+            double adjustPlace = Math.Max(fieldState.area.posCenterL, Math.Min(fieldState.area.posCenterR, currentFaderPlace));
+            if (!(curFaderTarget.targetPlaceRange.min * 0.5 <= adjustPlace && adjustPlace <= curFaderTarget.targetPlaceRange.max * 0.5))
+            {
+                var prevPlaceTarget = (prevFaderTarget.targetPlaceRange.min + prevFaderTarget.targetPlaceRange.max) / 2;
+                var curPlaceTarget = (curFaderTarget.targetPlaceRange.min + curFaderTarget.targetPlaceRange.max) / 2;
 
-            prevFaderTarget = curFaderTarget;
+                adjustPlace = MathUtils.CalculateXFromTwoPointFormFormula(curFrame, prevPlaceTarget, prevFaderTarget.finalTargetFrame, curPlaceTarget, curFaderTarget.finalTargetFrame);
+            }
+
+            adjustPlace = Math.Max(fieldState.area.posCenterL, Math.Min(fieldState.area.posCenterR, adjustPlace));
 
             return (float)adjustPlace;
         }
