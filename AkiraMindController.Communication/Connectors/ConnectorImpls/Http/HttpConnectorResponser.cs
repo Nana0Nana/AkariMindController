@@ -1,4 +1,5 @@
-﻿using System;
+﻿using AkiraMindController.Communication.Utils;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -22,7 +23,7 @@ namespace AkiraMindController.Communication.Connectors.ConnectorImpls.Http
                 return;
             HasResponsed = true;
             using var writer = new StreamWriter(outputStream);
-            writer.WriteLine(Utils.SerializeToPayloadString(obj));
+            writer.WriteLine(MessageContentPacker.SerializeToPayloadString(obj));
         }
     }
 }

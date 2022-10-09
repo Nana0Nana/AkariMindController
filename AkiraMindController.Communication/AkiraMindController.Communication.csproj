@@ -40,11 +40,13 @@
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AkariCommand\GetNoteManagerAutoPlayData.cs" />
     <Compile Include="AkariCommand\SetNoteManagerValue.cs" />
     <Compile Include="AkariCommand\GetNoteManagerValue.cs" />
     <Compile Include="AkariCommand\AutoPlay.cs" />
     <Compile Include="AkariCommand\ReloadFumen.cs" />
     <Compile Include="AkariCommand\PlayGuideSE.cs" />
+    <Compile Include="Bases\AutoFaderTarget.cs" />
     <Compile Include="Connectors\CommonMessages\Message.cs" />
     <Compile Include="AkariCommand\PauseGamePlay.cs" />
     <Compile Include="AkariCommand\RestartGamePlay.cs" />
@@ -63,7 +65,8 @@
     <Compile Include="Connectors\RegisterHandler.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SimpleInterfaceImplement.cs" />
-    <Compile Include="Utils.cs" />
+    <Compile Include="Utils\MessageContentPacker.cs" />
+    <Compile Include="Utils\ValueRange.cs" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

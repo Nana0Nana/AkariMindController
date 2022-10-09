@@ -21,6 +21,7 @@ using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Markup;
 using System.Windows.Threading;
 using static AkiraMindController.Communication.Connectors.CommonMessages.Ping;
 
@@ -65,6 +66,17 @@ namespace OngekiFumenEditorPlugins.AkariMindController.Modules.OngekiGamePlayCon
         {
             get => isPlayGuideSEAfterPlay;
             set => Set(ref isPlayGuideSEAfterPlay, value);
+        }
+
+        private bool isAutoPlay;
+        public bool IsAutoPlay
+        {
+            get => isAutoPlay;
+            set
+            {
+                Set(ref isAutoPlay, value);
+                MakeSureAutoPlayApplied();
+            }
         }
 
         private int seekTimeMsec;
@@ -112,7 +124,7 @@ namespace OngekiFumenEditorPlugins.AkariMindController.Modules.OngekiGamePlayCon
         {
             while (!obj.IsCancellationRequested)
             {
-                await Task.Delay(1100);
+                await Task.Delay(1000);
                 if (client is null)
                     continue;
                 await UpdateCheckConnecting();
@@ -137,6 +149,10 @@ namespace OngekiFumenEditorPlugins.AkariMindController.Modules.OngekiGamePlayCon
                 client = default;
                 ConnectStatus = ConnectStatus.Disconnected;
             }
+            else
+            {
+                RefreshUI();
+            }
         }
 
         public void OpenOgkrSavePathDialog()
@@ -144,8 +160,8 @@ namespace OngekiFumenEditorPlugins.AkariMindController.Modules.OngekiGamePlayCon
             OgkrSavePath = FileDialogHelper.SaveFile("请指定.ogkr保存的路径用于音击程序读取.", new[] { (".ogkr", "标准音击谱面文件") }) ?? OgkrSavePath;
         }
 
-        public async void GetOgkrSavePathFromGamePlay()        {
-
+        public async void GetOgkrSavePathFromGamePlay()
+        {
             if (ConnectStatus != ConnectStatus.Connected)
                 return;
 
@@ -156,25 +172,32 @@ namespace OngekiFumenEditorPlugins.AkariMindController.Modules.OngekiGamePlayCon
             MessageBox.Show("获取成功");
         }
 
+        private Task SendMessageAsync<T>() where T : new() => SendMessageAsync(new T());
+        private Task SendMessageAsync(object obj) => Task.Run(() => client.SendMessage(obj));
+        private Task<X> SendMessageAsync<T, X>() where T : new() where X : new() => SendMessageAsync<T, X>(new T());
+        private Task<X> SendMessageAsync<T, X>(T obj) where T : new() where X : new() => Task.Run(() => client.SendMessageWithResponse<T, X>(obj));
+
         public async Task Play()
         {
             if (ConnectStatus != ConnectStatus.Connected)
                 return;
-            await Task.Run(() => client.SendMessage(new ResumeGamePlay() { playGuideSEBeforePlay = IsPlayGuideSEAfterPlay }));
+
+            await SendMessageAsync(new ResumeGamePlay() { playGuideSEBeforePlay = IsPlayGuideSEAfterPlay });
         }
 
         public async Task Pause()
         {
             if (ConnectStatus != ConnectStatus.Connected)
                 return;
-            await Task.Run(() => client.SendMessage(new PauseGamePlay()));
+            await SendMessageAsync(new PauseGamePlay());
         }
 
         public async Task Restart()
         {
             if (ConnectStatus != ConnectStatus.Connected)
                 return;
-            await Task.Run(() => client.SendMessage(new RestartGamePlay()));
+
+            await SendMessageAsync(new RestartGamePlay());
         }
 
         public async Task SeekTo(TimeSpan time)
@@ -183,14 +206,20 @@ namespace OngekiFumenEditorPlugins.AkariMindController.Modules.OngekiGamePlayCon
                 return;
 
             Log.LogError($"akari seek to {time} , playAfterSeek : {IsPlayAfterSeek}");
-            await Task.Run(() => client.SendMessage(new SeekToGamePlay()
+            await SendMessageAsync(new SeekToGamePlay()
             {
                 audioTimeMsec = (int)time.TotalMilliseconds,
                 playAfterSeek = IsPlayAfterSeek
-            }));
+            });
         }
 
         public Task SeekTo() => SeekTo(TimeSpan.FromMilliseconds(SeekTimeMsec));
+
+        public async void RefreshUI()
+        {
+            isAutoPlay = (await GetNotesManagerData())?.IsAutoPlay ?? false;
+            NotifyOfPropertyChange(() => IsAutoPlay);
+        }
 
         public async Task Reload()
         {
@@ -203,6 +232,13 @@ namespace OngekiFumenEditorPlugins.AkariMindController.Modules.OngekiGamePlayCon
             var currentPlaytime = data.CurrentTime;
             await GenerateOgkr(OgkrSavePath);
             await SeekTo(currentPlaytime);
+        }
+
+        private async Task MakeSureAutoPlayApplied()
+        {
+            if (ConnectStatus != ConnectStatus.Connected)
+                return;
+            await SendMessageAsync(new AutoPlay() { isEnable = IsAutoPlay });
         }
 
         private async Task GenerateOgkr(string ogkrSavePath)
@@ -221,14 +257,14 @@ namespace OngekiFumenEditorPlugins.AkariMindController.Modules.OngekiGamePlayCon
 
             var data = await IoC.Get<IFumenParserManager>().GetSerializer(ogkrSavePath).SerializeAsync(fumen);
             await File.WriteAllBytesAsync(ogkrSavePath, data);
-            await Task.Run(() => client?.SendMessage(new ReloadFumen { checkOgkrFilePath = ogkrSavePath }));
+            await SendMessageAsync(new ReloadFumen { checkOgkrFilePath = ogkrSavePath });
 
             Log.LogError($"AkariMindController generate fumen to {ogkrSavePath}");
         }
 
         public async Task<bool> UpdateCheckConnecting()
         {
-            ConnectStatus = (await Task.Run(() => client?.SendMessageWithResponse<Ping, Pong>()).WithTimeout(1000)) is Pong ?
+            ConnectStatus = (await SendMessageAsync<Ping, Pong>().WithTimeout(1000)) is Pong ?
                 ConnectStatus.Connected : ConnectStatus.Disconnected;
             return ConnectStatus == ConnectStatus.Connected;
         }
@@ -241,12 +277,12 @@ namespace OngekiFumenEditorPlugins.AkariMindController.Modules.OngekiGamePlayCon
             return Task.FromResult(true);
         }
 
-        public void PlayGuideSE()
+        public async void PlayGuideSE()
         {
             if (ConnectStatus != ConnectStatus.Connected)
                 return;
 
-            Task.Run(() => client.SendMessage<PlayGuideSE>());
+            await SendMessageAsync<PlayGuideSE>();
         }
 
         public async Task<NotesManagerData?> GetNotesManagerData()
@@ -254,7 +290,7 @@ namespace OngekiFumenEditorPlugins.AkariMindController.Modules.OngekiGamePlayCon
             if (ConnectStatus != ConnectStatus.Connected)
                 return null;
 
-            if ((await Task.Run(() => client?.SendMessageWithResponse<GetNoteManagerValue, GetNoteManagerValue.ReturnValue>()) is not GetNoteManagerValue.ReturnValue retVal))
+            if ((await SendMessageAsync<GetNoteManagerValue, GetNoteManagerValue.ReturnValue>()) is not GetNoteManagerValue.ReturnValue retVal)
                 return null;
 
             var msecPerFrame = 1000 / 60.0;
@@ -272,6 +308,7 @@ namespace OngekiFumenEditorPlugins.AkariMindController.Modules.OngekiGamePlayCon
                 OgkrFilePath = retVal.ogkrFilePath,
                 IsPlayEnd = retVal.isPlayEnd,
                 IsPlaying = retVal.isPlaying,
+                IsAutoPlay = retVal.autoPlay
             };
         }
     }

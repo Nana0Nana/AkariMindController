@@ -35,6 +35,7 @@ namespace AkiraMindController.Communication.AkariCommand
             public float posInL;
 
             public bool autoPlay;
+            public float autoFader;
         }
     }
 }

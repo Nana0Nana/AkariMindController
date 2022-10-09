@@ -1,4 +1,5 @@
-﻿using System;
+﻿using AkiraMindController.Communication.Utils;
+using System;
 using System.IO;
 using System.Net;
 
@@ -19,7 +20,7 @@ namespace AkiraMindController.Communication.Connectors.ConnectorImpls.Http
 
         public void SendMessage(object obj, Action<Stream> respStreamProcFunc)
         {
-            var queryPayload = Utils.SerializeToPayloadString(obj);
+            var queryPayload = MessageContentPacker.SerializeToPayloadString(obj);
             var url = $"http://127.0.0.1:{Port}/?payload={queryPayload}";
             var request = (HttpWebRequest)WebRequest.Create(url);
 
@@ -51,7 +52,7 @@ namespace AkiraMindController.Communication.Connectors.ConnectorImpls.Http
             {
                 using var reader = new StreamReader(stream);
                 var str = reader.ReadToEnd();
-                var obj = Utils.DeserializeFromPayloadString(str);
+                var obj = MessageContentPacker.DeserializeFromPayloadString(str);
                 result = obj?.GetType() == typeof(X) ? (X)obj : default;
             });
             return result;

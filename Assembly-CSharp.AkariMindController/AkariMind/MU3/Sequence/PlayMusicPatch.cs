@@ -59,6 +59,9 @@ namespace AkariMindControllers.AkariMind.MU3.Sequence
                 case nameof(NotesManagerEx.fakeButtomMsec):
                     ntMgrEx.fakeButtomMsec = message.value;
                     break;
+                case nameof(NotesManagerEx.fakeButtomOffsetLen):
+                    ntMgrEx.fakeButtomOffsetLen = message.value;
+                    break;
                 default:
                     break;
             }
@@ -110,7 +113,8 @@ namespace AkariMindControllers.AkariMind.MU3.Sequence
                 posInL = field.area.posInL,
                 posInR = field.area.posInR,
 
-                autoPlay = ntMgrEx.isAutoPlay()
+                autoPlay = ntMgrEx.isAutoPlay(),
+                autoFader = ntMgrEx.autoFaderPre
             });
         }
 

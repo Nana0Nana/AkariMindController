@@ -1,4 +1,6 @@
-﻿using System;
+﻿using AkiraMindController.Communication.Bases;
+using AkiraMindController.Communication.Utils;
+using System;
 using System.Net;
 using System.Text;
 using System.Threading;
@@ -21,7 +23,7 @@ namespace AkiraMindController.Communication.Connectors.ConnectorImpls.Http
         private void ProcessRequest(HttpListenerContext r)
         {
             Log.WriteLine($"[server] path : {r.Request.Url.LocalPath}");
-            var param = Utils.DeserializeFromPayloadString(r.Request.QueryString["payload"]);
+            var param = MessageContentPacker.DeserializeFromPayloadString(r.Request.QueryString["payload"]);
             var responser = new HttpConnectorResponser(r.Response.OutputStream);
 
             foreach (var handler in GetTypeHandlers(param.GetType()))
@@ -34,6 +36,16 @@ namespace AkiraMindController.Communication.Connectors.ConnectorImpls.Http
 
         public void Start()
         {
+            Log.WriteLine($"TEST : {Json.Serialize(new AutoFaderTarget()
+            {
+                bellRanges = new ValueRange[] { new(1, 4), new(5, 6) },
+                damageRanges = new ValueRange[] { new(2, 5), new(6, 7) },
+                targetRanges = new ValueRange[] { new(3, 6), new(7, 8) },
+                moveableRange = new ValueRange(100, 600),
+                finalTargetFrame = 2857,
+                finalTargetPlace = 1234
+            })}");
+
             server.Start();
             thread?.Abort();
             thread = new Thread(() =>

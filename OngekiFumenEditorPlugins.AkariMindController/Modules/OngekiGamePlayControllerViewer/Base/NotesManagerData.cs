@@ -17,5 +17,7 @@ namespace OngekiFumenEditorPlugins.AkariMindController.Modules.OngekiGamePlayCon
         public bool IsPlayEnd { get; set; }
 
         public string OgkrFilePath { get; set; }
+
+        public bool IsAutoPlay { get; set; }
     }
 }

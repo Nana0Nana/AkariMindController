@@ -4,20 +4,21 @@ using System.Linq;
 using System.Runtime.ConstrainedExecution;
 using System.Text;
 
-namespace AkariMindControllers.Utils
+namespace AkiraMindController.Communication.Utils
 {
+    [Serializable]
     public struct ValueRange
     {
-        public float Min { get; set; }
-        public float Max { get; set; }
+        public float min;
+        public float max;
 
-        public ValueRange(float min, float max) { Min = min; Max = max; }
+        public ValueRange(float min, float max) { this.min = min; this.max = max; }
 
-        public override string ToString() => $"[{Min} - {Max}]";
+        public override string ToString() => $"[{min} - {max}]";
 
         public static IEnumerable<ValueRange> Union(IEnumerable<ValueRange> list)
         {
-            var itor = list.OrderBy(x => x.Min).GetEnumerator();
+            var itor = list.OrderBy(x => x.min).GetEnumerator();
             if (itor.MoveNext())
             {
                 var cur = itor.Current;
@@ -26,7 +27,7 @@ namespace AkariMindControllers.Utils
                 {
                     var append = itor.Current;
 
-                    if (append.Min > cur.Max)
+                    if (append.min > cur.max)
                     {
                         /*
                          |----cur----|
@@ -44,7 +45,7 @@ namespace AkariMindControllers.Utils
                         |--------newCur--------|
                         */
 
-                        cur.Max = append.Max;
+                        cur.max = append.max;
                     }
                 }
 
@@ -57,20 +58,20 @@ namespace AkariMindControllers.Utils
         {
             var itor = Union(list).GetEnumerator();
 
-            var min = r.Min;
-            var max = r.Max;
+            var min = r.min;
+            var max = r.max;
 
             while (itor.MoveNext())
             {
                 var cur = itor.Current;
 
-                if (min < cur.Min && cur.Min < max)
+                if (min < cur.min && cur.min < max)
                 {
-                    var gen = new ValueRange(min, cur.Min);
+                    var gen = new ValueRange(min, cur.min);
                     yield return gen;
                 }
 
-                min = cur.Max;
+                min = cur.max;
             }
 
             if (min < max)
@@ -80,5 +81,42 @@ namespace AkariMindControllers.Utils
             }
         }
         public static IEnumerable<ValueRange> Except(ValueRange r, params ValueRange[] list) => Except(r, list.AsEnumerable());
+
+        public static IEnumerable<ValueRange> Intersect(IEnumerable<ValueRange> range)
+        {
+            var itor = range.OrderBy(x => x.min).GetEnumerator();
+
+            IEnumerable<ValueRange> IntersectInternal()
+            {
+                if (itor.MoveNext())
+                {
+                    var prev = itor.Current;
+
+                    while (itor.MoveNext())
+                    {
+                        var cur = itor.Current;
+
+                        if (cur.min <= prev.max)
+                        {
+                            if (cur.max < prev.max)
+                            {
+                                yield return new ValueRange(cur.min, cur.max);
+                                continue;
+                            }
+                            else
+                            {
+                                yield return new ValueRange(cur.min, prev.max);
+                            }
+                        }
+
+                        prev = cur;
+                    }
+                }
+            }
+
+            return Union(IntersectInternal());
+        }
+
+        public static IEnumerable<ValueRange> Intersect(params ValueRange[] list) => Intersect(list.AsEnumerable());
     }
 }

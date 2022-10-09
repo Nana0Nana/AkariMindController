@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using static AkiraMindController.Communication.Connectors.CommonConnectorBase;
 
-namespace AkiraMindController.Communication
+namespace AkiraMindController.Communication.Utils
 {
-    internal class Utils
+    internal static class MessageContentPacker
     {
         public static object DeserializeFromPayloadString(string payloadStr)
         {

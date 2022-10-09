@@ -70,6 +70,12 @@
                                 </Style>
                             </TextBlock.Style>
                         </TextBlock>
+                        <Button
+                            Margin="20,0,0,0"
+                            VerticalAlignment="Center"
+                            cal:Message.Attach="RefreshUI()">
+                            刷新
+                        </Button>
                     </StackPanel>
                     <Label
                         Grid.Column="1"
@@ -97,6 +103,14 @@
                         <Button cal:Message.Attach="Play()" IsEnabled="{Binding IsConnected}">播放</Button>
                         <Button cal:Message.Attach="Pause()" IsEnabled="{Binding IsConnected}">暂停</Button>
                         <Button cal:Message.Attach="Restart()" IsEnabled="{Binding IsConnected}">重开</Button>
+                        <CheckBox
+                            Margin="10,5,10,5"
+                            Padding="2"
+                            VerticalAlignment="Center"
+                            VerticalContentAlignment="Center"
+                            IsChecked="{Binding IsAutoPlay}">
+                            自动游戏
+                        </CheckBox>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal">
                         <Label VerticalAlignment="Center" Content="跳转" />
