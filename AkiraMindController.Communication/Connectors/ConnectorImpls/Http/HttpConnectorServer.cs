@@ -1,4 +1,5 @@
 ﻿using AkiraMindController.Communication.Bases;
+using AkiraMindController.Communication.Connectors.CommonMessages;
 using AkiraMindController.Communication.Utils;
 using System;
 using System.Linq;
@@ -24,15 +25,25 @@ namespace AkiraMindController.Communication.Connectors.ConnectorImpls.Http
         private void ProcessRequest(HttpListenerContext r)
         {
             Log.WriteLine($"[server] path : {r.Request.Url.LocalPath}");
-            var param = MessageContentPacker.DeserializeFromPayloadString(r.Request.QueryString["payload"]);
-            var responser = new HttpConnectorResponser(r.Response.OutputStream);
 
-            foreach (var handler in GetTypeHandlers(param.GetType()))
-                handler.Handle(param, responser);
+            try
+            {
+                var param = MessageContentPacker.DeserializeFromPayloadString(r.Request.QueryString["payload"]);
+                r.Response.StatusCode = 200;
+                using var stream = r.Response.OutputStream;
+                var responser = new HttpConnectorResponser(stream);
 
-            r.Response.StatusCode = 200;
-            r.Response.OutputStream.Close();
-            r.Response.Close();
+                foreach (var handler in GetTypeHandlers(param.GetType()))
+                    handler.Handle(param, responser);
+            }
+            catch (Exception e)
+            {
+                Log.WriteLine($"[server] type handler throw exception : {e.Message} , stack : {MessageContentPacker.SerializeToPayloadString(e.StackTrace)}");
+            }
+            finally
+            {
+                r.Response.Close();
+            }
         }
 
         public void Start()
@@ -50,7 +61,7 @@ namespace AkiraMindController.Communication.Connectors.ConnectorImpls.Http
 
             var r = new AutoFaderTarget();
             r.Deerialize(c);
-            Log.WriteLine($"TEST2 : {string.Join(",", r.damageRanges.Select(x=>x.ToString()).ToArray())}");
+            Log.WriteLine($"TEST2 : {string.Join(",", r.damageRanges.Select(x => x.ToString()).ToArray())}");
 
             server.Start();
             thread?.Abort();
@@ -63,7 +74,9 @@ namespace AkiraMindController.Communication.Connectors.ConnectorImpls.Http
                         Log.WriteLine($"[server] ");
                         Log.WriteLine($"[server] waiting new request...");
                         var r = server.GetContext();
+                        Log.SetEnableLog(r.Request.Url.LocalPath != "/ping");
                         ProcessRequest(r);
+                        Log.SetEnableLog(true);
                         Log.WriteLine($"[server] request processed");
                     }
                     catch (Exception e)

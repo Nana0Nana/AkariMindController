@@ -1,4 +1,5 @@
-﻿using AkiraMindController.Communication.Utils;
+﻿using AkiraMindController.Communication.Connectors.CommonMessages;
+using AkiraMindController.Communication.Utils;
 using System;
 using System.IO;
 using System.Net;
@@ -20,27 +21,33 @@ namespace AkiraMindController.Communication.Connectors.ConnectorImpls.Http
 
         public void SendMessage(object obj, Action<Stream> respStreamProcFunc)
         {
-            var queryPayload = MessageContentPacker.SerializeToPayloadString(obj);
-            var url = $"http://127.0.0.1:{Port}/?payload={queryPayload}";
-            var request = (HttpWebRequest)WebRequest.Create(url);
+            var isPing = obj is not Ping;
 
-            Log.WriteLine($"[client] posted request : {url}");
-            try
+            Log.SetEnableLog(isPing);
             {
-                using var resp = (HttpWebResponse)request.GetResponse();
-                Log.WriteLine($"[client] request response : {resp.StatusCode}");
+                var queryPayload = MessageContentPacker.SerializeToPayloadString(obj);
+                var url = $"http://127.0.0.1:{Port}/{(isPing ? "ping":string.Empty)}?payload={queryPayload}";
+                var request = (HttpWebRequest)WebRequest.Create(url);
 
-                if (respStreamProcFunc is not null)
+                Log.WriteLine($"[client] posted request : {url}");
+                try
                 {
-                    using var stream = resp.GetResponseStream();
-                    respStreamProcFunc(stream);
-                    Log.WriteLine($"[client] response stream has been processed");
+                    using var resp = (HttpWebResponse)request.GetResponse();
+                    Log.WriteLine($"[client] request response : {resp.StatusCode}");
+
+                    if (respStreamProcFunc is not null)
+                    {
+                        using var stream = resp.GetResponseStream();
+                        respStreamProcFunc(stream);
+                        Log.WriteLine($"[client] response stream has been processed");
+                    }
+                }
+                catch (Exception e)
+                {
+                    Log.WriteLine($"[client] resp-waiting throw exception : {e.Message}");
                 }
             }
-            catch (Exception e)
-            {
-                Log.WriteLine($"[client] resp-waiting throw exception : {e.Message}");
-            }
+            Log.SetEnableLog(true);
         }
 
         public X SendMessageWithResponse<T, X>(T obj)

@@ -36,6 +36,7 @@ namespace AkiraMindController.Communication.AkariCommand
 
             public bool autoPlay;
             public float autoFader;
+            public bool isPauseIfMissBellOrDamaged;
         }
     }
 }

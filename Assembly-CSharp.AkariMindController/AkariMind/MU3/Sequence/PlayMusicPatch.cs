@@ -1,5 +1,6 @@
 ﻿using AkariMindControllers.AkariMind.MU3.Notes;
 using AkiraMindController.Communication.AkariCommand;
+using AkiraMindController.Communication.Bases;
 using AkiraMindController.Communication.Connectors;
 using MonoMod;
 using MU3.Battle;
@@ -44,8 +45,10 @@ namespace AkariMindControllers.AkariMind.MU3.Sequence
             Controller.RegisterMessageHandler<PrintGamePlayStatus>(OnRequestPrintGamePlayStatus);
             Controller.RegisterMessageHandler<ReloadFumen>(OnReloadFumen);
             Controller.RegisterMessageHandler<PlayGuideSE>(OnPlayGuideSE);
+            Controller.RegisterMessageHandler<CalculateNextAutoPlayData>(OnCalculateNextAutoPlayData);
             Controller.RegisterMessageHandler<GetNoteManagerValue>(OnRequestGetNoteManagerValue);
             Controller.RegisterMessageHandler<AutoPlay>(OnAutoPlay);
+            Controller.RegisterMessageHandler<DumpNoteManagerAutoPlayData>(OnDumpNoteManagerAutoPlayData);
             Controller.RegisterMessageHandler<GetNoteManagerAutoPlayData>(OnGetNoteManagerAutoPlayData);
             Controller.RegisterMessageHandler<SeekToGamePlay>(OnRequestSeekToGamePlay);
             Controller.RegisterMessageHandler<SetNoteManagerValue>(OnSetNoteManagerValue);
@@ -53,18 +56,71 @@ namespace AkariMindControllers.AkariMind.MU3.Sequence
             isPause = false;
         }
 
+        private void OnCalculateNextAutoPlayData(CalculateNextAutoPlayData message, IResponser responser)
+        {
+            var result = ntMgrEx.calcNextAutoPlayFader(message.frame);
+
+            responser.Response(new CalculateNextAutoPlayData.ReturnValue()
+            {
+                curFaderTargetStr = result.Serialize()
+            });
+        }
+
+        private void OnDumpNoteManagerAutoPlayData(DumpNoteManagerAutoPlayData message, IResponser responser)
+        {
+            responser.Response(new DumpNoteManagerAutoPlayData.ReturnValue()
+            {
+                dumpFilePath = ntMgrEx.dumpFailedAutoTargetData()
+            });
+        }
+
         private void OnSetNoteManagerValue(SetNoteManagerValue message, IResponser responser)
         {
-            switch (message.name)
+            var valStr = message.value;
+            try
             {
-                case nameof(NotesManagerEx.fakeButtomMsec):
-                    ntMgrEx.fakeButtomMsec = message.value;
-                    break;
-                case nameof(NotesManagerEx.fakeButtomOffsetLen):
-                    ntMgrEx.fakeButtomOffsetLen = message.value;
-                    break;
-                default:
-                    break;
+                switch (message.name)
+                {
+                    case "isPauseIfMissBellOrDamaged":
+                        ntMgrEx.enablePauseIfMissBellOrDamaged(bool.Parse(valStr));
+                        break;
+                    case "curFaderTarget":
+                        if (string.IsNullOrEmpty(valStr))
+                        {
+                            ntMgrEx.curFaderTarget = default;
+                        }
+                        else
+                        {
+                            var cur = new AutoFaderTarget();
+                            cur.Deerialize(valStr);
+                            ntMgrEx.curFaderTarget = cur;
+                        }
+                        break;
+                    case "prevFaderTarget":
+                        if (string.IsNullOrEmpty(valStr))
+                        {
+                            ntMgrEx.prevFaderTarget = default;
+                        }
+                        else
+                        {
+                            var prev = new AutoFaderTarget();
+                            prev.Deerialize(valStr);
+                            ntMgrEx.prevFaderTarget = prev;
+                        }
+                        break;
+                    case "calcAutoPlayFader":
+                        ntMgrEx.calcAutoPlayFader();
+                        break;
+                    default:
+                        break;
+                }
+
+
+                PatchLog.WriteLine($"call OnSetNoteManagerValue() name : {message.name} , value : {valStr} ");
+            }
+            catch (Exception e)
+            {
+                PatchLog.WriteLine($"call OnSetNoteManagerValue() faild , name : {message.name} , value : {valStr} , exception : {e.Message}");
             }
         }
 
@@ -84,6 +140,7 @@ namespace AkariMindControllers.AkariMind.MU3.Sequence
             };
 
             responser.Response(ret);
+            PatchLog.WriteLine("called OnGetNoteManagerAutoPlayData()");
         }
 
         private void OnPlayGuideSE(PlayGuideSE message, IResponser responser)
@@ -128,8 +185,9 @@ namespace AkariMindControllers.AkariMind.MU3.Sequence
                 posInR = field.area.posInR,
 
                 autoPlay = ntMgrEx.isAutoPlay(),
-                autoFader = ntMgrEx.autoFaderPre
-            });
+                autoFader = ntMgrEx.autoFaderPre,
+                isPauseIfMissBellOrDamaged = ntMgrEx.isPauseIfMissBellOrDamaged()
+            }); ;
         }
 
         private void OnRequestPrintGamePlayStatus(PrintGamePlayStatus message)
@@ -152,10 +210,8 @@ namespace AkariMindControllers.AkariMind.MU3.Sequence
         {
             if (isPause)
                 return;
-            var bgm = Singleton<GameSound>.instance.gameBGM;
-            pauseMsec = bgm.msec;
-            bgm.stop();
-            ntMgr.setPause(true);
+
+            pauseMsec = ntMgrEx.pauseGame();
 
             isPause = true;
         }
@@ -165,9 +221,7 @@ namespace AkariMindControllers.AkariMind.MU3.Sequence
             if (!isPause)
                 return;
 
-            Singleton<GameSound>.instance.gameBGM.playMusic(_sessionInfo.musicData, (int)pauseMsec);
-            ntMgr.setPause(false);
-            ntMgr.startPlay(pauseMsec);
+            ntMgrEx.resumeGame(pauseMsec);
 
             isPause = false;
         }
@@ -266,6 +320,9 @@ namespace AkariMindControllers.AkariMind.MU3.Sequence
             Controller.UnregisterSpecifyMessageAllHandler<ReloadFumen>();
             Controller.UnregisterSpecifyMessageAllHandler<AutoPlay>();
             Controller.UnregisterSpecifyMessageAllHandler<SetNoteManagerValue>();
+            Controller.UnregisterSpecifyMessageAllHandler<DumpNoteManagerAutoPlayData>();
+            Controller.UnregisterSpecifyMessageAllHandler<GetNoteManagerAutoPlayData>();
+            Controller.UnregisterSpecifyMessageAllHandler<CalculateNextAutoPlayData>();
         }
 
         private IEnumerator OnRequestRestartGamePlay(RestartGamePlay message)

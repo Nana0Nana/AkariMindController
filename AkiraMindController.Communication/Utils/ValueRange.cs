@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.ConstrainedExecution;
 using System.Text;
+using static AkiraMindController.Communication.Utils.ValueRange.FlagValue;
 
 namespace AkiraMindController.Communication.Utils
 {
@@ -14,7 +16,7 @@ namespace AkiraMindController.Communication.Utils
 
         public ValueRange(float min, float max) { this.min = min; this.max = max; }
 
-        public override string ToString() => $"[{min} - {max}]";
+        public override string ToString() => $"[{min} ~ {max}]";
 
         public static IEnumerable<ValueRange> Union(IEnumerable<ValueRange> list)
         {
@@ -54,69 +56,96 @@ namespace AkiraMindController.Communication.Utils
         }
         public static IEnumerable<ValueRange> Union(params ValueRange[] list) => Union(list.AsEnumerable());
 
-        public static IEnumerable<ValueRange> Except(ValueRange r, IEnumerable<ValueRange> list)
+        public struct FlagValue
         {
-            var itor = Union(list).GetEnumerator();
-
-            var min = r.min;
-            var max = r.max;
-
-            while (itor.MoveNext())
+            public enum Flag
             {
-                var cur = itor.Current;
-
-                if (min < cur.min && cur.min < max)
-                {
-                    var gen = new ValueRange(min, cur.min);
-                    yield return gen;
-                }
-
-                min = cur.max;
+                EnterA,
+                LeaveA,
+                EnterB,
+                LeaveB,
             }
 
-            if (min < max)
+            public readonly float Value;
+            public readonly Flag Flags;
+
+            public FlagValue(float x, Flag f)
             {
-                var gen = new ValueRange(min, max);
-                yield return gen;
+                Flags = f;
+                Value = x;
             }
         }
-        public static IEnumerable<ValueRange> Except(ValueRange r, params ValueRange[] list) => Except(r, list.AsEnumerable());
 
-        public static IEnumerable<ValueRange> Intersect(IEnumerable<ValueRange> range)
+        public static IEnumerable<ValueRange> Except(IEnumerable<ValueRange> a, IEnumerable<ValueRange> b)
         {
-            var itor = range.OrderBy(x => x.min).GetEnumerator();
+            var itorA = Union(a).SelectMany(x => new FlagValue[] { new(x.min, Flag.EnterA), new(x.max, Flag.LeaveA) });
+            var itorB = Union(b).SelectMany(x => new FlagValue[] { new(x.min, Flag.EnterB), new(x.max, Flag.LeaveB) });
 
-            IEnumerable<ValueRange> IntersectInternal()
+            var itor = itorA.Concat(itorB).OrderBy(x => x.Value).GetEnumerator();
+            var value = 0;
+
+            void applyFlag(Flag f)
             {
-                if (itor.MoveNext())
+                value += f switch
                 {
-                    var prev = itor.Current;
-
-                    while (itor.MoveNext())
-                    {
-                        var cur = itor.Current;
-
-                        if (cur.min <= prev.max)
-                        {
-                            if (cur.max < prev.max)
-                            {
-                                yield return new ValueRange(cur.min, cur.max);
-                                continue;
-                            }
-                            else
-                            {
-                                yield return new ValueRange(cur.min, prev.max);
-                            }
-                        }
-
-                        prev = cur;
-                    }
-                }
+                    Flag.EnterA or Flag.LeaveB => 1,
+                    Flag.EnterB or Flag.LeaveA => -1,
+                    _ => 0
+                };
             }
 
-            return Union(IntersectInternal());
+            if (itor.MoveNext())
+            {
+                var prev = itor.Current;
+                applyFlag(prev.Flags);
+
+                while (itor.MoveNext())
+                {
+                    var cur = itor.Current;
+
+                    if (value == 1 && prev.Value != cur.Value)
+                        yield return new(prev.Value, cur.Value);
+
+                    applyFlag(cur.Flags);
+                    prev = itor.Current;
+                }
+            }
         }
 
-        public static IEnumerable<ValueRange> Intersect(params ValueRange[] list) => Intersect(list.AsEnumerable());
+        public static IEnumerable<ValueRange> Intersect(IEnumerable<ValueRange> a, IEnumerable<ValueRange> b)
+        {
+            var itorA = Union(a).SelectMany(x => new FlagValue[] { new(x.min, Flag.EnterA), new(x.max, Flag.LeaveA) });
+            var itorB = Union(b).SelectMany(x => new FlagValue[] { new(x.min, Flag.EnterB), new(x.max, Flag.LeaveB) });
+
+            var itor = itorA.Concat(itorB).OrderBy(x => x.Value).GetEnumerator();
+            var value = 0;
+
+            void applyFlag(Flag f)
+            {
+                value += f switch
+                {
+                    Flag.EnterA  or Flag.EnterB => 1,
+                    Flag.LeaveA or Flag.LeaveB => -1,
+                    _ => 0
+                };
+            }
+
+            if (itor.MoveNext())
+            {
+                var prev = itor.Current;
+                applyFlag(prev.Flags);
+
+                while (itor.MoveNext())
+                {
+                    var cur = itor.Current;
+
+                    if (value == 2 && prev.Value != cur.Value)
+                        yield return new(prev.Value, cur.Value);
+
+                    applyFlag(cur.Flags);
+                    prev = itor.Current;
+                }
+            }
+        }
     }
 }

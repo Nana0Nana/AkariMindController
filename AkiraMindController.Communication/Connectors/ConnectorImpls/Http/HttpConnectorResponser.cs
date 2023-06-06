@@ -23,7 +23,7 @@ namespace AkiraMindController.Communication.Connectors.ConnectorImpls.Http
                 return;
             HasResponsed = true;
             using var writer = new StreamWriter(outputStream);
-            writer.WriteLine(MessageContentPacker.SerializeToPayloadString(obj));
+            writer.Write(MessageContentPacker.SerializeToPayloadString(obj));
         }
     }
 }

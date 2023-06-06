@@ -14,12 +14,19 @@ namespace AkiraMindController.Communication
 
     internal static class Log
     {
-        public static void WriteLine(string msg) => SimpleInterfaceImplement.Log(msg);
+        private static bool disableLog = false;
+
+        public static void SetEnableLog(bool enableLog) => disableLog = !enableLog;
+        public static void WriteLine(string msg)
+        {
+            if (!disableLog)
+                SimpleInterfaceImplement.Log(msg);
+        }
     }
 
     internal static class Json
     {
-        public static T Deserialize<T>(string json) => (T)SimpleInterfaceImplement.Deserialize(json, typeof(T));
+        public static T Deserialize<T>(string json) => string.IsNullOrEmpty(json) ? default : (T)SimpleInterfaceImplement.Deserialize(json, typeof(T));
         public static object Deserialize(string json, Type type) => SimpleInterfaceImplement.Deserialize(json, type);
         public static string Serialize<T>(T obj) => SimpleInterfaceImplement.Serialize(obj);
     }

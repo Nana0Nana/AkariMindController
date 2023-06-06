@@ -9,6 +9,6 @@ namespace AkiraMindController.Communication.AkariCommand
     public class SetNoteManagerValue
     {
         public string name;
-        public float value;
+        public string value;
     }
 }

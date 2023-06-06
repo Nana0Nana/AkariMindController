@@ -40,6 +40,8 @@
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AkariCommand\DumpNoteManagerAutoPlayData.cs" />
+    <Compile Include="AkariCommand\CalculateNextAutoPlayData.cs" />
     <Compile Include="AkariCommand\GetNoteManagerAutoPlayData.cs" />
     <Compile Include="AkariCommand\SetNoteManagerValue.cs" />
     <Compile Include="AkariCommand\GetNoteManagerValue.cs" />
@@ -47,6 +49,7 @@
     <Compile Include="AkariCommand\ReloadFumen.cs" />
     <Compile Include="AkariCommand\PlayGuideSE.cs" />
     <Compile Include="Bases\AutoFaderTarget.cs" />
+    <Compile Include="Bases\Collection\FixedSizeCycleCollection.cs" />
     <Compile Include="Connectors\CommonMessages\Message.cs" />
     <Compile Include="AkariCommand\PauseGamePlay.cs" />
     <Compile Include="AkariCommand\RestartGamePlay.cs" />

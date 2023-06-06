@@ -75,15 +75,54 @@ namespace OngekiFumenEditorPlugins.AkariMindController.Modules.OngekiGamePlayCon
             set
             {
                 Set(ref isAutoPlay, value);
-                MakeSureAutoPlayApplied();
+                MakeSureOptionsApplied();
             }
         }
 
-        private int seekTimeMsec;
-        public int SeekTimeMsec
+        private bool isPauseIfMissBellOrDamaged;
+        public bool IsPauseIfMissBellOrDamaged
+        {
+            get => isPauseIfMissBellOrDamaged;
+            set
+            {
+                Set(ref isPauseIfMissBellOrDamaged, value);
+                MakeSureOptionsApplied();
+            }
+        }
+
+
+        private string curAutoFaderTargetDataStr;
+        public string CurAutoFaderTargetDataStr
+        {
+            get => curAutoFaderTargetDataStr;
+            set
+            {
+                Set(ref curAutoFaderTargetDataStr, value);
+            }
+        }
+
+        private string preAutoFaderTargetDataStr;
+        public string PreAutoFaderTargetDataStr
+        {
+            get => preAutoFaderTargetDataStr;
+            set
+            {
+                Set(ref preAutoFaderTargetDataStr, value);
+            }
+        }
+
+        private float seekTimeMsec;
+        public float SeekTimeMsec
         {
             get => seekTimeMsec;
             set => Set(ref seekTimeMsec, value);
+        }
+
+        private float calcCurFrame;
+        public float CalcCurFrame
+        {
+            get => calcCurFrame;
+            set => Set(ref calcCurFrame, value);
         }
 
         private bool isPlayAfterSeek;
@@ -217,8 +256,13 @@ namespace OngekiFumenEditorPlugins.AkariMindController.Modules.OngekiGamePlayCon
 
         public async void RefreshUI()
         {
-            isAutoPlay = (await GetNotesManagerData())?.IsAutoPlay ?? false;
+            var data = await GetNotesManagerData();
+
+            isAutoPlay = (data)?.IsAutoPlay ?? false;
+            isPauseIfMissBellOrDamaged = (data)?.IsPauseIfMissBellOrDamaged ?? false;
+
             NotifyOfPropertyChange(() => IsAutoPlay);
+            NotifyOfPropertyChange(() => IsPauseIfMissBellOrDamaged);
         }
 
         public async Task Reload()
@@ -234,11 +278,12 @@ namespace OngekiFumenEditorPlugins.AkariMindController.Modules.OngekiGamePlayCon
             await SeekTo(currentPlaytime);
         }
 
-        private async Task MakeSureAutoPlayApplied()
+        private async Task MakeSureOptionsApplied()
         {
             if (ConnectStatus != ConnectStatus.Connected)
                 return;
             await SendMessageAsync(new AutoPlay() { isEnable = IsAutoPlay });
+            await SendMessageAsync(new SetNoteManagerValue() { name = "isPauseIfMissBellOrDamaged", value = IsPauseIfMissBellOrDamaged.ToString() });
         }
 
         private async Task GenerateOgkr(string ogkrSavePath)
@@ -252,14 +297,25 @@ namespace OngekiFumenEditorPlugins.AkariMindController.Modules.OngekiGamePlayCon
                 return;
             }
 
-            var method = type.GetMethod("Process").CreateDelegate<Func<OngekiFumen, Task<OngekiFumen>>>(null);
-            var fumen = await method(CurrentEditor.Fumen);
+            var method = type.GetMethod("Process");
+            var task = (method.Invoke(null, new[] { CurrentEditor.Fumen }) as Task);
+            await task;
+            dynamic result = task.GetType().GetProperty("Result").GetValue(task);
 
-            var data = await IoC.Get<IFumenParserManager>().GetSerializer(ogkrSavePath).SerializeAsync(fumen);
-            await File.WriteAllBytesAsync(ogkrSavePath, data);
-            await SendMessageAsync(new ReloadFumen { checkOgkrFilePath = ogkrSavePath });
+            if (result?.SerializedFumen is OngekiFumen serializedFumen)
+            {
+                var data = await IoC.Get<IFumenParserManager>().GetSerializer(ogkrSavePath).SerializeAsync(serializedFumen);
+                await File.WriteAllBytesAsync(ogkrSavePath, data);
+                await SendMessageAsync(new ReloadFumen { checkOgkrFilePath = ogkrSavePath });
 
-            Log.LogError($"AkariMindController generate fumen to {ogkrSavePath}");
+                Log.LogInfo($"AkariMindController generate fumen to {ogkrSavePath}");
+            }
+            else
+            {
+                var errorMsg = result.Message;
+                Log.LogError($"AkariMindController can't generate fumen : {errorMsg}");
+                MessageBox.Show($"无法生成谱面并更新到游戏中:{errorMsg}");
+            }
         }
 
         public async Task<bool> UpdateCheckConnecting()
@@ -308,8 +364,64 @@ namespace OngekiFumenEditorPlugins.AkariMindController.Modules.OngekiGamePlayCon
                 OgkrFilePath = retVal.ogkrFilePath,
                 IsPlayEnd = retVal.isPlayEnd,
                 IsPlaying = retVal.isPlaying,
-                IsAutoPlay = retVal.autoPlay
+                IsAutoPlay = retVal.autoPlay,
+                IsPauseIfMissBellOrDamaged = retVal.isPauseIfMissBellOrDamaged
             };
+        }
+
+        public async void GetAutoFaderData()
+        {
+            if (ConnectStatus != ConnectStatus.Connected)
+                return;
+
+            if ((await SendMessageAsync<GetNoteManagerAutoPlayData, GetNoteManagerAutoPlayData.ReturnValue>()) is GetNoteManagerAutoPlayData.ReturnValue data)
+            {
+                CurAutoFaderTargetDataStr = data.curFaderTargetStr;
+                PreAutoFaderTargetDataStr = data.prevFaderTargetStr;
+            }
+        }
+
+        public async void ApplyAutoFaderData()
+        {
+            if (ConnectStatus != ConnectStatus.Connected)
+                return;
+
+            await SendMessageAsync(new SetNoteManagerValue() { name = "curFaderTarget", value = CurAutoFaderTargetDataStr?.Replace("\n", "") });
+            await SendMessageAsync(new SetNoteManagerValue() { name = "prevFaderTarget", value = PreAutoFaderTargetDataStr?.Replace("\n", "") });
+        }
+
+        public async void DumpAutoFaderTarget()
+        {
+            if (ConnectStatus != ConnectStatus.Connected)
+                return;
+
+            if ((await SendMessageAsync<DumpNoteManagerAutoPlayData, DumpNoteManagerAutoPlayData.ReturnValue>()) is DumpNoteManagerAutoPlayData.ReturnValue data)
+            {
+                var filePath = data.dumpFilePath;
+                if (File.Exists(filePath))
+                {
+                    if (MessageBox.Show("转储成功,是否打开文件夹?", "DumpAutoFaderTarget", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+                    {
+                        var dir = Path.GetDirectoryName(filePath);
+                        ProcessUtils.OpenPath(dir);
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("转储失败,请自行查看游戏日志", "DumpAutoFaderTarget");
+                }
+            }
+        }
+
+        public async void ManualCallCalcAutoPlayFader()
+        {
+            if (ConnectStatus != ConnectStatus.Connected)
+                return;
+
+            if (await SendMessageAsync<CalculateNextAutoPlayData, CalculateNextAutoPlayData.ReturnValue>(new CalculateNextAutoPlayData() { frame = CalcCurFrame }) is CalculateNextAutoPlayData.ReturnValue data)
+            {
+                CurAutoFaderTargetDataStr = data.curFaderTargetStr;
+            }
         }
     }
 }

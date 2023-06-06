@@ -111,6 +111,14 @@
                             IsChecked="{Binding IsAutoPlay}">
                             自动游戏
                         </CheckBox>
+                        <CheckBox
+                            Margin="10,5,10,5"
+                            Padding="2"
+                            VerticalAlignment="Center"
+                            VerticalContentAlignment="Center"
+                            IsChecked="{Binding IsPauseIfMissBellOrDamaged}">
+                            受伤或者错失Bell时自动暂停
+                        </CheckBox>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal">
                         <Label VerticalAlignment="Center" Content="跳转" />
@@ -161,6 +169,57 @@
                     <StackPanel Orientation="Horizontal">
                         <Button cal:Message.Attach="PlayGuideSE()" IsEnabled="{Binding IsConnected}">播放节奏音效</Button>
                     </StackPanel>
+
+                    <GroupBox Margin="5">
+                        <GroupBox.Header>
+                            <Label Content="AutoFaderTarget Debugger" />
+                        </GroupBox.Header>
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <Button cal:Message.Attach="GetAutoFaderData()" IsEnabled="{Binding IsConnected}">获取当前AutoFader数据</Button>
+                                <Button cal:Message.Attach="ApplyAutoFaderData()" IsEnabled="{Binding IsConnected}">设置当前AutoFader数据</Button>
+                                <Button cal:Message.Attach="DumpAutoFaderTarget()" IsEnabled="{Binding IsConnected}">将所有AutoFaderTarget数据转储到文件</Button>
+                            </StackPanel>
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <Label VerticalAlignment="Center" Content="curAutoFaderTarget" />
+                                    <TextBox
+                                        Width="600"
+                                        Margin="10,5,10,5"
+                                        Padding="2"
+                                        VerticalAlignment="Center"
+                                        AcceptsReturn="True"
+                                        AcceptsTab="True"
+                                        Text="{Binding CurAutoFaderTargetDataStr}" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <Label VerticalAlignment="Center" Content="preAutoFaderTarget" />
+                                    <TextBox
+                                        Width="600"
+                                        Margin="10,5,10,5"
+                                        Padding="2"
+                                        VerticalAlignment="Center"
+                                        AcceptsReturn="True"
+                                        AcceptsTab="True"
+                                        Text="{Binding PreAutoFaderTargetDataStr}"
+                                        TextWrapping="NoWrap" />
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal">
+                                    <Label VerticalAlignment="Center" Content="curFrame" />
+                                    <TextBox
+                                        Width="100"
+                                        Margin="10,5,10,5"
+                                        Padding="2"
+                                        VerticalAlignment="Center"
+                                        AcceptsReturn="True"
+                                        AcceptsTab="True"
+                                        Text="{Binding CalcCurFrame}" />
+                                    <Button cal:Message.Attach="ManualCallCalcAutoPlayFader()" IsEnabled="{Binding IsConnected}">手动调用calcAutoPlayFader()</Button>
+                                </StackPanel>
+                            </StackPanel>
+                        </StackPanel>
+                    </GroupBox>
                 </StackPanel>
             </GroupBox>
         </StackPanel>

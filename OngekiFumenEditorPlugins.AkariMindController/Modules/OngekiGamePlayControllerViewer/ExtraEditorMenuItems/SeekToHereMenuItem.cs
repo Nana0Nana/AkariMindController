@@ -19,7 +19,7 @@ namespace OngekiFumenEditorPlugins.AkariMindController.Modules.OngekiGamePlayCon
         public async void Handle(FumenVisualEditorViewModel editor, EventArgs args)
         {
             var controller = IoC.Get<IOngekiGamePlayControllerViewer>();
-            var curTGrid = editor.GetCurrentJudgeLineTGrid();
+            var curTGrid = editor.GetCurrentTGrid();
             var msec = TGridCalculator.ConvertTGridToAudioTime(curTGrid, editor);
 
             await controller.SeekTo(msec);

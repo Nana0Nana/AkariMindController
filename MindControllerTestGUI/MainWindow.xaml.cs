@@ -3,6 +3,7 @@ using AkiraMindController.Communication.AkariCommand;
 using AkiraMindController.Communication.Bases;
 using AkiraMindController.Communication.Connectors.CommonMessages;
 using AkiraMindController.Communication.Connectors.ConnectorImpls.Http;
+using AkiraMindController.Communication.Utils;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -194,6 +195,23 @@ namespace MindControllerTestGUI
             };
 
             timer.Start();
+
+            double CalculateXFromTwoPointFormFormula(double y, double x1, double y1, double x2, double y2)
+            {
+                double num = y2 - y1;
+                double num2 = x2 - x1;
+                bool flag = num == 0.0;
+                double result;
+                if (flag)
+                {
+                    result = x1;
+                }
+                else
+                {
+                    result = (y - y1) * 1.0 / num * num2 + x1;
+                }
+                return result;
+            }
         }
 
         private void OnIsEnableAutoPlayChanged()
@@ -263,7 +281,7 @@ namespace MindControllerTestGUI
 
         private void Button_Click_7(object sender, RoutedEventArgs e)
         {
-            client.SendMessage(new SetNoteManagerValue() { name = "fakeButtomMsec", value = FakeButtomSec });
+            client.SendMessage(new SetNoteManagerValue() { name = "fakeButtomMsec", value = FakeButtomSec.ToString() });
         }
 
         private void Button_Click_8(object sender, RoutedEventArgs e)
@@ -291,7 +309,7 @@ namespace MindControllerTestGUI
             print(curFaderTarget);
             AppendOutputLine($"------------prevFaderTarget-----------");
             var prevFaderTarget = new AutoFaderTarget();
-            curFaderTarget.Deerialize(data.prevFaderTargetStr);
+            prevFaderTarget.Deerialize(data.prevFaderTargetStr);
             print(prevFaderTarget);
             AppendOutputLine($"--------------------------------------------");
 

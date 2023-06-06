@@ -21,23 +21,23 @@ namespace AkiraMindController.Communication.Bases
         public string Serialize()
         {
             var sb = new StringBuilder();
-            sb.Append(string.Join(" ", damageRanges.Select(x => Json.Serialize(x)).ToArray()));
+            sb.Append("damageRanges : " + string.Join(" ", damageRanges.Select(x => Json.Serialize(x)).ToArray()));
             sb.Append('\n');
-            sb.Append(string.Join(" ", bellRanges.Select(x => Json.Serialize(x)).ToArray()));
+            sb.Append("bellRanges : " + string.Join(" ", bellRanges.Select(x => Json.Serialize(x)).ToArray()));
             sb.Append('\n');
-            sb.Append(string.Join(" ", targetRanges.Select(x => Json.Serialize(x)).ToArray()));
+            sb.Append("targetRanges : " + string.Join(" ", targetRanges.Select(x => Json.Serialize(x)).ToArray()));
             sb.Append('\n');
-            sb.Append(Json.Serialize(moveableRange));
+            sb.Append("moveableRange : " + Json.Serialize(moveableRange));
             sb.Append('\n');
-            sb.Append(Json.Serialize(targetPlaceRange));
+            sb.Append("targetPlaceRange : " + Json.Serialize(targetPlaceRange));
             sb.Append('\n');
-            sb.Append(finalTargetFrame);
+            sb.Append("finalTargetFrame : " + finalTargetFrame);
             return sb.ToString();
         }
 
         public void Deerialize(string str)
         {
-            var split = str.Split('\n');
+            var split = str.Split('\n').Select(x => x.Split(new[] { ':' }, 2).Skip(1).FirstOrDefault()).ToArray();
 
             ValueRange[] des(string s) => s.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).Select(Json.Deserialize<ValueRange>).ToArray();
 

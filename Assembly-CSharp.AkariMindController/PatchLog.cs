@@ -23,7 +23,13 @@ namespace AkariMindControllers
 
         public static void WriteLine(string msg)
         {
-            File.AppendAllText(FilePath, msg + Environment.NewLine);
+            try
+            {
+                File.AppendAllText(FilePath, msg + Environment.NewLine);
+            }
+            catch 
+            {
+            }
             Debug.Log(msg);
         }
     }
