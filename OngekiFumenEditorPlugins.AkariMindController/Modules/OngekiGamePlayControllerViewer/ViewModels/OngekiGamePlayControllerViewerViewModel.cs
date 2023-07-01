@@ -294,15 +294,6 @@ namespace OngekiFumenEditorPlugins.AkariMindController.Modules.OngekiGamePlayCon
             if (IoC.Get<IEditorDocumentManager>().CurrentActivatedEditor is not FumenVisualEditorViewModel editor)
                 return;
 
-
-
-            if (Type.GetType("OngekiFumenEditorPlugins.OngekiFumenSupport.Kernel.StandardizeFormat,OngekiFumenEditorPlugins.OngekiFumenSupport") is not Type type)
-            {
-                Log.LogError($"AkariMindController can't generate .ogkr because program not apply plugin named 'OngekiFumenSupport'.");
-                return;
-            }
-
-            var method = type.GetMethod("Process");
             var result = await StandardizeFormat.Process(editor.Fumen);
 
             if (result?.SerializedFumen is OngekiFumen serializedFumen)
