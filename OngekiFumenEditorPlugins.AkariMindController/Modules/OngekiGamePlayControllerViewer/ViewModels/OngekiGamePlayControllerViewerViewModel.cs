@@ -6,6 +6,7 @@ using Caliburn.Micro;
 using Gemini.Framework;
 using Gemini.Framework.Services;
 using OngekiFumenEditor.Base;
+using OngekiFumenEditor.Kernel;
 using OngekiFumenEditor.Modules.FumenVisualEditor.Kernel;
 using OngekiFumenEditor.Modules.FumenVisualEditor.ViewModels;
 using OngekiFumenEditor.Parser;
@@ -293,6 +294,8 @@ namespace OngekiFumenEditorPlugins.AkariMindController.Modules.OngekiGamePlayCon
             if (IoC.Get<IEditorDocumentManager>().CurrentActivatedEditor is not FumenVisualEditorViewModel editor)
                 return;
 
+
+
             if (Type.GetType("OngekiFumenEditorPlugins.OngekiFumenSupport.Kernel.StandardizeFormat,OngekiFumenEditorPlugins.OngekiFumenSupport") is not Type type)
             {
                 Log.LogError($"AkariMindController can't generate .ogkr because program not apply plugin named 'OngekiFumenSupport'.");
@@ -300,9 +303,7 @@ namespace OngekiFumenEditorPlugins.AkariMindController.Modules.OngekiGamePlayCon
             }
 
             var method = type.GetMethod("Process");
-            var task = (method.Invoke(null, new[] { editor.Fumen }) as Task);
-            await task;
-            dynamic result = task.GetType().GetProperty("Result").GetValue(task);
+            var result = await StandardizeFormat.Process(editor.Fumen);
 
             if (result?.SerializedFumen is OngekiFumen serializedFumen)
             {
