@@ -24,6 +24,7 @@ using System.Windows;
 using System.Windows.Markup;
 using System.Windows.Threading;
 using static AkiraMindController.Communication.Connectors.CommonMessages.Ping;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.TaskbarClock;
 
 namespace OngekiFumenEditorPlugins.AkariMindController.Modules.OngekiGamePlayControllerViewer.ViewModels
 {
@@ -52,13 +53,6 @@ namespace OngekiFumenEditorPlugins.AkariMindController.Modules.OngekiGamePlayCon
         {
             get => ogkrSavePath;
             set => Set(ref ogkrSavePath, value);
-        }
-
-        private FumenVisualEditorViewModel currentEditor;
-        public FumenVisualEditorViewModel CurrentEditor
-        {
-            get => currentEditor;
-            set => Set(ref currentEditor, value);
         }
 
         private bool isPlayGuideSEAfterPlay;
@@ -132,6 +126,13 @@ namespace OngekiFumenEditorPlugins.AkariMindController.Modules.OngekiGamePlayCon
             set => Set(ref isPlayAfterSeek, value);
         }
 
+        private bool isReloadAfterSeek;
+        public bool IsReloadAfterSeek
+        {
+            get => isReloadAfterSeek;
+            set => Set(ref isReloadAfterSeek, value);
+        }
+
         private int port = 30000;
         private HttpConnectorClient client;
         private AbortableThread thread;
@@ -147,7 +148,6 @@ namespace OngekiFumenEditorPlugins.AkariMindController.Modules.OngekiGamePlayCon
             base.OnViewLoaded(view);
 
             DisplayName = "AkariMindController";
-            IoC.Get<IEditorDocumentManager>().OnActivateEditorChanged += OngekiGamePlayControllerViewerViewModel_OnActivateEditorChanged;
 
             var opt = new JsonSerializerOptions() { IncludeFields = true };
             SimpleInterfaceImplement.Deserialize = (json, type) => JsonSerializer.Deserialize(json, type, opt);
@@ -168,11 +168,6 @@ namespace OngekiFumenEditorPlugins.AkariMindController.Modules.OngekiGamePlayCon
                     continue;
                 await UpdateCheckConnecting();
             }
-        }
-
-        private void OngekiGamePlayControllerViewerViewModel_OnActivateEditorChanged(FumenVisualEditorViewModel @new, FumenVisualEditorViewModel old)
-        {
-            CurrentEditor = @new;
         }
 
         private void AppendOutputLine(string v)
@@ -245,6 +240,8 @@ namespace OngekiFumenEditorPlugins.AkariMindController.Modules.OngekiGamePlayCon
                 return;
 
             Log.LogError($"akari seek to {time} , playAfterSeek : {IsPlayAfterSeek}");
+            if (IsReloadAfterSeek)
+                await Reload();
             await SendMessageAsync(new SeekToGamePlay()
             {
                 audioTimeMsec = (int)time.TotalMilliseconds,
@@ -273,9 +270,14 @@ namespace OngekiFumenEditorPlugins.AkariMindController.Modules.OngekiGamePlayCon
                 return;
             if ((await GetNotesManagerData()) is not NotesManagerData data)
                 return;
+            await SendMessageAsync(new PauseGamePlay());
             var currentPlaytime = data.CurrentTime;
             await GenerateOgkr(OgkrSavePath);
-            await SeekTo(currentPlaytime);
+            await SendMessageAsync(new SeekToGamePlay()
+            {
+                audioTimeMsec = (int)currentPlaytime.TotalMilliseconds,
+                playAfterSeek = IsPlayAfterSeek
+            });
         }
 
         private async Task MakeSureOptionsApplied()
@@ -288,7 +290,7 @@ namespace OngekiFumenEditorPlugins.AkariMindController.Modules.OngekiGamePlayCon
 
         private async Task GenerateOgkr(string ogkrSavePath)
         {
-            if (CurrentEditor is null)
+            if (IoC.Get<IEditorDocumentManager>().CurrentActivatedEditor is not FumenVisualEditorViewModel editor)
                 return;
 
             if (Type.GetType("OngekiFumenEditorPlugins.OngekiFumenSupport.Kernel.StandardizeFormat,OngekiFumenEditorPlugins.OngekiFumenSupport") is not Type type)
@@ -298,7 +300,7 @@ namespace OngekiFumenEditorPlugins.AkariMindController.Modules.OngekiGamePlayCon
             }
 
             var method = type.GetMethod("Process");
-            var task = (method.Invoke(null, new[] { CurrentEditor.Fumen }) as Task);
+            var task = (method.Invoke(null, new[] { editor.Fumen }) as Task);
             await task;
             dynamic result = task.GetType().GetProperty("Result").GetValue(task);
 

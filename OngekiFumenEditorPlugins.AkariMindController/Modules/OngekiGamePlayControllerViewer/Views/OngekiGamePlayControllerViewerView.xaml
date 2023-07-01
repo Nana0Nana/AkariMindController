@@ -159,6 +159,14 @@
                         <Button cal:Message.Attach="Reload()" IsEnabled="{Binding IsConnected}">游戏重新加载谱面</Button>
                         <Button cal:Message.Attach="GetOgkrSavePathFromGamePlay()" IsEnabled="{Binding IsConnected}">获取谱面路径</Button>
                     </StackPanel>
+                    <CheckBox
+                        Margin="10,5,10,5"
+                        Padding="2"
+                        VerticalAlignment="Center"
+                        VerticalContentAlignment="Center"
+                        IsChecked="{Binding IsReloadAfterSeek}">
+                        是否跳转也重新加载谱面
+                    </CheckBox>
                 </StackPanel>
             </GroupBox>
             <GroupBox Margin="5">
