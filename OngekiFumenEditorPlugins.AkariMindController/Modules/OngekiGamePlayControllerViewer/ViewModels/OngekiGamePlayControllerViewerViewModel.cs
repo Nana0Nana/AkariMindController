@@ -12,6 +12,7 @@ using OngekiFumenEditor.Modules.FumenVisualEditor.ViewModels;
 using OngekiFumenEditor.Parser;
 using OngekiFumenEditor.Utils;
 using OngekiFumenEditor.Utils.Attributes;
+using OngekiFumenEditor.Utils.Ogkr;
 using OngekiFumenEditorPlugins.AkariMindController.Modules.OngekiGamePlayControllerViewer.Base;
 using OngekiFumenEditorPlugins.AkariMindController.Modules.OngekiGamePlayControllerViewer.Views;
 using System;
